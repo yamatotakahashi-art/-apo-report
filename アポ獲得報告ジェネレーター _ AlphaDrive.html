@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<!-- saved from url=(0094)https://raw.githack.com/yamato015/Reserch/claude/appointment-report-generator-PYYDM/index.html -->
+<html lang="ja"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アポ獲得報告ジェネレーター | AlphaDrive</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+    background: #f5f5f0;
+    color: #2c2c2a;
+    margin: 0;
+    padding: 20px;
+    line-height: 1.7;
+  }
+  .container { max-width: 880px; margin: 0 auto; }
+  header, .panel, .help {
+    background: #fff;
+    border: 1px solid #e0ddd2;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  h1 { font-size: 20px; font-weight: 500; margin: 0 0 4px; }
+  .sub { font-size: 13px; color: #5f5e5a; margin: 0; }
+  .name-row {
+    display: flex; gap: 8px; align-items: center;
+    margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid #ece9de; flex-wrap: wrap;
+  }
+  .name-row label { font-size: 13px; color: #5f5e5a; font-weight: 500; }
+  .name-row input {
+    flex: 1; min-width: 180px;
+    padding: 8px 12px; border: 1px solid #d3d1c7;
+    border-radius: 6px; font-size: 14px; font-family: inherit;
+  }
+  .name-saved { font-size: 12px; color: #0f6e56; }
+  .name-row select {
+    flex: 1; min-width: 180px;
+    padding: 8px 12px; border: 1px solid #d3d1c7;
+    border-radius: 6px; font-size: 14px; font-family: inherit;
+    background: #fff;
+  }
+  .project-panel {
+    margin-top: 12px; padding: 12px 14px;
+    background: #faf9f4; border: 1px solid #ece9de;
+    border-radius: 8px;
+  }
+  .project-help {
+    font-size: 11px; color: #5f5e5a; margin-bottom: 8px;
+  }
+  .project-help code {
+    background: #fff; padding: 1px 5px; border-radius: 3px;
+    font-size: 11px; font-family: "SF Mono", Consolas, monospace;
+  }
+  .project-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+  .project-item {
+    display: grid; grid-template-columns: 160px 1fr auto;
+    gap: 6px; align-items: center;
+  }
+  .project-item input {
+    padding: 6px 10px; border: 1px solid #d3d1c7;
+    border-radius: 5px; font-size: 12px; font-family: inherit;
+  }
+  .project-item .project-remove {
+    padding: 4px 10px; font-size: 12px;
+    color: #a55b5b; border-color: transparent;
+  }
+  .project-item .project-remove:hover {
+    background: #faecec; border-color: #e0c5c5;
+  }
+  @media (max-width: 600px) {
+    .project-item { grid-template-columns: 1fr; }
+  }
+  .panel-label {
+    display: block; font-size: 13px; color: #5f5e5a;
+    font-weight: 500; margin-bottom: 8px;
+  }
+  textarea {
+    width: 100%; min-height: 130px; max-height: 400px;
+    padding: 12px; border: 1px solid #d3d1c7;
+    border-radius: 8px;
+    font-family: "SF Mono", Consolas, "Courier New", monospace;
+    font-size: 13px; resize: vertical; line-height: 1.6;
+    transition: height 0.1s;
+  }
+  textarea:focus, input:focus { outline: none; border-color: #888780; }
+  .btn-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
+  button {
+    padding: 8px 16px; border: 1px solid #d3d1c7;
+    background: #fff; border-radius: 6px;
+    font-size: 13px; font-family: inherit; cursor: pointer;
+    color: #2c2c2a; transition: all 0.15s; font-weight: 500;
+  }
+  button:hover { background: #f5f5f0; border-color: #b4b2a9; }
+  button:active { transform: scale(0.98); }
+  button.primary { background: #185fa5; color: #fff; border-color: #185fa5; }
+  button.primary:hover { background: #0c447c; border-color: #0c447c; }
+  button.ok { background: #0f6e56; color: #fff; border-color: #0f6e56; }
+  button.ghost { background: transparent; border-color: transparent; color: #888780; }
+  button.ghost:hover { background: #f5f5f0; color: #2c2c2a; }
+  .kbd {
+    display: inline-block; padding: 0 5px; margin-left: 4px;
+    border: 1px solid rgba(255,255,255,0.35); border-radius: 3px;
+    font-size: 10px; font-family: monospace; opacity: 0.85;
+  }
+  .copy-all { margin-left: auto; }
+  .summary-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px; padding: 8px 14px;
+    background: #fff; border: 1px solid #e0ddd2; border-radius: 8px;
+    font-size: 12px; color: #5f5e5a;
+  }
+  .summary-bar .count { font-weight: 500; color: #2c2c2a; }
+  .result-card {
+    background: #fff; border: 1px solid #e0ddd2;
+    border-radius: 12px; padding: 14px 18px; margin-bottom: 10px;
+    position: relative;
+  }
+  .result-card.has-warn { border-color: #f0d4a6; }
+  .result-head {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 8px; margin-bottom: 10px; flex-wrap: wrap;
+  }
+  .result-title { font-size: 13px; color: #5f5e5a; font-weight: 500; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .result-index {
+    display: inline-block; padding: 1px 8px;
+    background: #185fa5; color: #fff;
+    border-radius: 10px; font-size: 11px; font-weight: 600;
+  }
+  .result-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .result-actions button { padding: 5px 12px; font-size: 12px; }
+  .warn {
+    background: #faeeda; color: #854f0b;
+    font-size: 11px; padding: 2px 8px;
+    border-radius: 6px; display: inline-block;
+    cursor: pointer; user-select: none;
+  }
+  .warn:hover { background: #f5e2c4; }
+  .edit-panel {
+    display: none; margin-bottom: 10px;
+    padding: 10px 12px; background: #faf9f4; border-radius: 8px;
+  }
+  .edit-panel.open { display: block; }
+  .field-row {
+    display: grid; grid-template-columns: 100px 1fr;
+    gap: 8px; align-items: center; margin-bottom: 6px;
+  }
+  .field-row:last-child { margin-bottom: 0; }
+  .field-row.focused .field-label { color: #185fa5; font-weight: 500; }
+  .field-row.focused .field-edit { border-color: #185fa5; background: #fff; }
+  .field-label { color: #5f5e5a; font-size: 12px; }
+  .field-edit {
+    padding: 6px 10px; border: 1px solid #d3d1c7;
+    border-radius: 5px; font-size: 12px;
+    font-family: "SF Mono", Consolas, monospace;
+    width: 100%;
+  }
+  .body {
+    font-family: "SF Mono", Consolas, "Courier New", monospace;
+    font-size: 13px; white-space: pre-wrap;
+    padding: 12px 14px; background: #f5f5f0;
+    border-radius: 8px; line-height: 1.8;
+  }
+  .help { font-size: 12px; color: #5f5e5a; margin-top: 16px; }
+  .help h3 {
+    font-size: 13px; font-weight: 500;
+    color: #2c2c2a; margin: 0 0 8px;
+  }
+  .help h3:not(:first-child) { margin-top: 12px; }
+  .help ul { margin: 0; padding-left: 18px; }
+  .help li { margin-bottom: 3px; }
+  .help code {
+    background: #f5f5f0; padding: 1px 5px; border-radius: 3px;
+    font-size: 11px; font-family: "SF Mono", Consolas, monospace;
+  }
+  @media (max-width: 600px) {
+    body { padding: 12px; }
+    .panel, header, .help { padding: 16px; }
+    .field-row { grid-template-columns: 80px 1fr; }
+    .copy-all { margin-left: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>アポ獲得報告ジェネレーター</h1>
+    <p class="sub">スプレッドシートからコピペ → Slack貼り付け用に整形（1件でも複数件でもOK）</p>
+    <div class="name-row">
+      <label>報告者名</label>
+      <input id="reporter" type="text" placeholder="例：佐藤">
+      <span class="name-saved" id="saved-msg"></span>
+    </div>
+    <div class="name-row">
+      <label>プロジェクト</label>
+      <select id="project-select"><option value="-1">（メンションなし）</option><option value="0">阪急阪神</option></select>
+      <button id="project-edit-btn" class="ghost">閉じる</button>
+    </div>
+    <div class="project-panel" id="project-panel" style="display: block;">
+      <div class="project-help">プロジェクト名と Slack メンション（<code>@田中 @鈴木</code> のように半角スペース区切り）を登録できます</div>
+      <div class="project-list" id="project-list">
+      <div class="project-item" data-idx="0">
+        <input class="project-name" value="阪急阪神" placeholder="プロジェクト名">
+        <input class="project-mentions" value="@岩﨑達也 @河野有沙(MO)（5/13-15休） @池元龍右/Ryusuke  Ikemoto(MO)" placeholder="@田中 @鈴木">
+        <button class="project-remove" type="button">削除</button>
+      </div>
+    </div>
+      <button id="project-add" class="ghost">+ プロジェクト追加</button>
+    </div>
+  </header>
+
+  <div class="panel">
+    <label class="panel-label">スプレッドシートからコピーした内容を貼り付け（ヘッダー行含めてもOK／複数行可）</label>
+    <textarea id="input-area" placeholder="例：
+優先度	No.	法人名	施設名	住所	電話番号	担当	架電日	架電時間	結果	コメント
+最優先	1	株式会社○○	△△ホーム	福岡市…	092-123-4567	田中 太郎 様	5/15	15:00	アポ	5/20 14時に訪問希望" style="height: 133px;"></textarea>
+
+    <div class="btn-row">
+      <button id="parse-btn" class="primary">整形する<span class="kbd">⌘↵</span></button>
+      <button id="sample-btn">サンプル投入</button>
+      <button id="clear-btn">クリア</button>
+      <button id="copy-all-btn" class="copy-all" style="display:none;">📋 全件コピー</button>
+    </div>
+  </div>
+
+  <div id="summary-bar" class="summary-bar" style="display: none;">
+    <span><span class="count" id="summary-count">1</span> 件を整形しました</span>
+    <span id="summary-warn"><span style="color:#0f6e56;">✓ 警告なし</span></span>
+  </div>
+
+  <div id="results-area"></div>
+
+  <div class="help">
+    <h3>判別の仕組み</h3>
+    <ul>
+      <li><b>引用符付きセル対応</b>：スプレッドシートで改行を含むセル（"…\n…"）を正しく1セルとして解釈</li>
+      <li><b>構造の自動推定</b>：ヘッダーがなくても、最初の日付セルを境にベース情報／架電履歴を自動分割</li>
+      <li><b>担当者名</b>：コメント中の「○○様」「○○さん」をセル全体から名前部分だけ抽出して優先採用（担当列の値より優先）</li>
+      <li><b>電話番号</b>：コメント中の「○○に担当いる0123-…」など特定電話があれば優先採用、括弧・スペースをハイフンに正規化</li>
+      <li><b>施設名</b>：施設名＋コメント中の支店名（つつじの丘など）を自動連結</li>
+      <li><b>日程</b>：「訪問希望」「オンライン」「日程調整中」などの種別キーワードを抽出。確定時刻があれば併記</li>
+      <li><b>備考</b>：「アポ獲得」結果のラウンドのコメントをそのまま掲載、住所と他ラウンド要点を末尾に追加</li>
+    </ul>
+    <h3>ショートカット</h3>
+    <ul>
+      <li>整形：<code>Ctrl/⌘ + Enter</code>（入力欄フォーカス時）</li>
+      <li>クリア：<code>Esc</code>（入力欄フォーカス時）</li>
+      <li>警告チップ <span class="warn" style="cursor:default;">⚠ 例</span> をクリックすると編集パネルが開きます</li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const input = $('input-area');
+  const parseBtn = $('parse-btn');
+  const sampleBtn = $('sample-btn');
+  const clearBtn = $('clear-btn');
+  const copyAllBtn = $('copy-all-btn');
+  const results = $('results-area');
+  const reporter = $('reporter');
+  const savedMsg = $('saved-msg');
+  const summaryBar = $('summary-bar');
+  const summaryCount = $('summary-count');
+  const summaryWarn = $('summary-warn');
+  const projectSelect = $('project-select');
+  const projectEditBtn = $('project-edit-btn');
+  const projectPanel = $('project-panel');
+  const projectList = $('project-list');
+  const projectAddBtn = $('project-add');
+
+  // --- 報告者名 localStorage ---
+  const STORAGE_KEY = 'alphadrive_apo_reporter_name';
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) reporter.value = saved;
+  } catch(e) {}
+
+  let saveTimer;
+  reporter.addEventListener('input', ()=>{
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(()=>{
+      try {
+        localStorage.setItem(STORAGE_KEY, reporter.value);
+        savedMsg.textContent = '✓ 保存しました';
+        setTimeout(()=>{ savedMsg.textContent = ''; }, 1500);
+      } catch(e) {}
+      renderAll();
+    }, 300);
+  });
+
+  // --- プロジェクト管理 localStorage ---
+  const PROJECTS_KEY = 'alphadrive_apo_projects';
+  const PROJECT_SELECTED_KEY = 'alphadrive_apo_project_selected';
+  let projects = []; // [{name: 'プロジェクトA', mentions: '@田中 @鈴木'}]
+  let selectedProjectIdx = -1; // -1 = no mention
+
+  function loadProjects(){
+    try {
+      const saved = localStorage.getItem(PROJECTS_KEY);
+      if (saved){
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) projects = parsed;
+      }
+      const sel = localStorage.getItem(PROJECT_SELECTED_KEY);
+      if (sel !== null) selectedProjectIdx = parseInt(sel, 10);
+      if (isNaN(selectedProjectIdx)) selectedProjectIdx = -1;
+    } catch(e) {}
+  }
+  function saveProjects(){
+    try {
+      localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+      localStorage.setItem(PROJECT_SELECTED_KEY, String(selectedProjectIdx));
+    } catch(e) {}
+  }
+  function renderProjectSelect(){
+    const cur = selectedProjectIdx;
+    projectSelect.innerHTML = '<option value="-1">（メンションなし）</option>'
+      + projects.map((p, i) => `<option value="${i}" ${i === cur ? 'selected' : ''}>${escapeHtml(p.name || '（無名）')}</option>`).join('');
+    projectSelect.value = String(cur);
+  }
+  function renderProjectList(){
+    projectList.innerHTML = projects.map((p, i) => `
+      <div class="project-item" data-idx="${i}">
+        <input class="project-name" value="${escapeHtml(p.name || '')}" placeholder="プロジェクト名" />
+        <input class="project-mentions" value="${escapeHtml(p.mentions || '')}" placeholder="@田中 @鈴木" />
+        <button class="project-remove" type="button">削除</button>
+      </div>
+    `).join('');
+    projectList.querySelectorAll('.project-item').forEach(item => {
+      const idx = +item.dataset.idx;
+      const nameInp = item.querySelector('.project-name');
+      const menInp = item.querySelector('.project-mentions');
+      const debouncedUpdate = (() => {
+        let t;
+        return () => {
+          clearTimeout(t);
+          t = setTimeout(() => {
+            projects[idx].name = nameInp.value;
+            projects[idx].mentions = menInp.value;
+            saveProjects();
+            renderProjectSelect();
+            renderAll();
+          }, 300);
+        };
+      })();
+      nameInp.addEventListener('input', debouncedUpdate);
+      menInp.addEventListener('input', debouncedUpdate);
+      item.querySelector('.project-remove').addEventListener('click', () => {
+        projects.splice(idx, 1);
+        if (selectedProjectIdx === idx) selectedProjectIdx = -1;
+        else if (selectedProjectIdx > idx) selectedProjectIdx--;
+        saveProjects();
+        renderProjectList();
+        renderProjectSelect();
+        renderAll();
+      });
+    });
+  }
+
+  loadProjects();
+  renderProjectSelect();
+  renderProjectList();
+
+  projectSelect.addEventListener('change', () => {
+    selectedProjectIdx = parseInt(projectSelect.value, 10);
+    if (isNaN(selectedProjectIdx)) selectedProjectIdx = -1;
+    saveProjects();
+    renderAll();
+  });
+  projectEditBtn.addEventListener('click', () => {
+    const open = projectPanel.style.display !== 'none';
+    projectPanel.style.display = open ? 'none' : 'block';
+    projectEditBtn.textContent = open ? '編集' : '閉じる';
+  });
+  projectAddBtn.addEventListener('click', () => {
+    projects.push({ name: '', mentions: '' });
+    saveProjects();
+    renderProjectList();
+    renderProjectSelect();
+    // 追加した行の名前にフォーカス
+    const items = projectList.querySelectorAll('.project-item');
+    const last = items[items.length - 1];
+    if (last) last.querySelector('.project-name').focus();
+  });
+
+  function getActiveMentions(){
+    if (selectedProjectIdx < 0 || !projects[selectedProjectIdx]) return '';
+    return (projects[selectedProjectIdx].mentions || '').trim();
+  }
+
+  // --- 正規表現 ---
+  const RE = {
+    phone: /^[\s]*\(?0\d{1,4}\)?[-(\s.]?\d{1,4}[-)\s.]?\d{3,4}[\s]*$/,
+    phoneLoose: /(\(?0\d{1,4}\)?[-(\s.]?\d{1,4}[-)\s.]?\d{3,4})/,
+    mail: /^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$/,
+    mailLoose: /([A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,})/,
+    sama: /[一-龥ァ-ヴーぁ-ん々][一-龥ァ-ヴーぁ-ん々A-Za-z\s　]{0,15}(?:様|さん)\s*$/,
+    samaAnywhere: /([一-龥ァ-ヴーぁ-ん々][一-龥ァ-ヴーぁ-ん々A-Za-z\s　]{0,15})(様|さん)/,
+    personSuffix: /(様|さん|氏|殿|部長|課長|社長|専務|常務|取締役|主任|店長|支配人|総支配人|マネージャー|室長|本部長|事業部長|執行役員|代表|施設長|ホーム長|園長|理事長|事務長|チーフ|係長|主幹|担当者)/,
+    facility: /(株式会社|有限会社|合同会社|社会福祉法人|医療法人|学校法人|一般財団法人|公益財団法人|NPO法人|\(株\)|（株）|ホテル|旅館|リゾート|観光|ツーリスト|トラベル|温泉|ゴルフ|有料老人ホーム|老人ホーム|サ高住|グループホーム|デイサービス|介護施設|施設|HD|ホールディングス|グループ|商事|不動産|電鉄|鉄道|エアライン|空港|販売|建設|工業|製作所|製造|食品|物産|サービス|機構|協会|学園|大学|病院|医院|クリニック|会館|館|荘|苑|寮|寺|院)/,
+    address: /(北海道|青森県|岩手県|宮城県|秋田県|山形県|福島県|茨城県|栃木県|群馬県|埼玉県|千葉県|東京都|神奈川県|新潟県|富山県|石川県|福井県|山梨県|長野県|岐阜県|静岡県|愛知県|三重県|滋賀県|京都府|大阪府|兵庫県|奈良県|和歌山県|鳥取県|島根県|岡山県|広島県|山口県|徳島県|香川県|愛媛県|高知県|福岡県|佐賀県|長崎県|熊本県|大分県|宮崎県|鹿児島県|沖縄県|.+市.+区|.+市[一-龥ぁ-んァ-ヴ]|.+町[一-龥]|.+郡)/,
+    apoResult: /(アポ|アポイント|獲得|成功|決定|確定|取得|取れ|商談化|面談OK|オンラインOK|^OK$)/i,
+    apoContext: /(アポ|面談|訪問|伺う|伺います|お時間|確定|決定|商談|来訪|来社|お会い|お打ち合わせ|オンライン)/,
+    recallContext: /(再架電|折り返し|不在|留守|TEL|架電予定|かけ直し|電話する|再度|再連絡|再TEL|再電話|架電希望|連絡予定)/
+  };
+
+  // --- ヘッダー語彙 ---
+  const HEADER_ALIASES = {
+    priority:     ['優先度','プライオリティ'],
+    no:           ['no.','no','番号','#','整理番号'],
+    corporation:  ['法人名','会社名','本部','法人','企業名','運営法人','運営会社'],
+    facility:     ['施設名','事業所名','店舗名','物件名','拠点名','ホーム名','施設'],
+    address:      ['住所','所在地','所在'],
+    phone:        ['電話番号','電話','tel','ｔｅｌ','telephone','連絡先','電話番号1','電話番号2','代表電話'],
+    person:       ['担当','担当者','担当者名','ご担当','ご担当者','ご担当者名','お客様名','責任者','窓口','面談相手'],
+    mail:         ['メール','メールアドレス','mail','e-mail','email','mailaddress','メアド'],
+    call_date:    ['架電日','架電日時','コール日','tel日','電話日','日付'],
+    call_time:    ['架電時間','コール時間','tel時間','時間','時刻'],
+    call_result:  ['結果','アプローチ結果','コール結果','tel結果','対応結果','ステータス','アポ結果'],
+    call_comment: ['コメント','メモ','備考','詳細','内容','ヒアリング','所感']
+  };
+
+  function normHeader(h){
+    return (h||'').toLowerCase()
+      .replace(/[\s　・／/_（）()]/g,'')
+      .replace(/[0-9０-９]+$/,'')
+      .trim();
+  }
+
+  function classifyHeader(cell){
+    const n = normHeader(cell);
+    if (!n) return null;
+    let best = null, bestLen = 0;
+    for (const key in HEADER_ALIASES){
+      for (const alias of HEADER_ALIASES[key]){
+        if (n.includes(alias) && alias.length > bestLen){
+          best = key; bestLen = alias.length;
+        }
+      }
+    }
+    return best;
+  }
+
+  function detectHeader(line){
+    const cells = line.split('\t');
+    let hits = 0;
+    for (const c of cells){
+      if (classifyHeader(c)) hits++;
+    }
+    return hits >= 2;
+  }
+
+  // --- 正規化 ---
+  function normalizePhone(raw){
+    if (!raw) return '';
+    const m = raw.match(RE.phoneLoose);
+    if (!m) return raw.trim();
+    return m[1].replace(/[()\s.]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  }
+
+  function normalizeMail(raw){
+    if (!raw) return '';
+    const m = raw.match(RE.mailLoose);
+    return m ? m[1] : raw.trim();
+  }
+
+  function normalizePerson(raw){
+    if (!raw) return '';
+    let s = raw.trim();
+    s = s.replace(/^[^：:]{1,8}[：:]\s*/, ''); // 「担当：」等のラベル除去
+    s = s.replace(/[　]+/g, ' '); // 全角スペース → 半角
+    return s;
+  }
+
+  // --- 担当者抽出 ---
+  // 長文セル中で「○○様」がヒットした場合、セル全体ではなく名前部分のみ返す
+  function extractSamaName(cell){
+    const t = (cell||'').trim();
+    if (!t) return '';
+    if (t.length <= 25 && RE.sama.test(t)) return normalizePerson(t);
+    const m = t.match(RE.samaAnywhere);
+    if (m) return normalizePerson((m[1] + m[2]).trim());
+    return '';
+  }
+
+  function extractPersonFromHeader(personCells, allCells){
+    const personValues = personCells.filter(c => c && c.length <= 40 && !RE.facility.test(c));
+    if (personValues.length){
+      const withSama = personValues.find(c => RE.sama.test(c) || RE.samaAnywhere.test(c));
+      if (withSama) return extractSamaName(withSama);
+      return normalizePerson(personValues[0]);
+    }
+    for (const c of allCells){
+      const n = extractSamaName(c);
+      if (n) return n;
+    }
+    for (const c of allCells){
+      const s = (c||'').trim();
+      if (!s || s.length > 25) continue;
+      if (RE.facility.test(s)) continue;
+      if (RE.personSuffix.test(s)) return normalizePerson(s);
+    }
+    return '';
+  }
+
+  function extractPersonNoHeader(cells){
+    for (const c of cells){
+      const n = extractSamaName(c);
+      if (n && c.length <= 25) return n; // 短いセルの「様」優先
+    }
+    for (const c of cells){
+      const s = (c||'').trim();
+      if (!s || s.length > 25) continue;
+      if (RE.facility.test(s)) continue;
+      if (RE.personSuffix.test(s)) return normalizePerson(s);
+    }
+    for (const c of cells){
+      const n = extractSamaName(c);
+      if (n) return n;
+    }
+    for (const c of cells){
+      const s = (c||'').trim();
+      if (/^[一-龥ァ-ヴー]{1,4}[\s　]+[一-龥ァ-ヴー]{1,4}$/.test(s)) return normalizePerson(s);
+    }
+    return '';
+  }
+
+  // --- 引用符付きセルを含むTSVを正しく分解 ---
+  // Googleスプレッドシートからのコピペでは、改行を含むセルが "..." で囲まれる
+  function parseTSV(text){
+    const rows = [];
+    let row = [];
+    let cell = '';
+    let inQuote = false;
+    let cellStart = true; // 現在のセルの先頭にいるか（引用開始判定用）
+    for (let i = 0; i < text.length; i++){
+      const c = text[i];
+      if (inQuote){
+        if (c === '"'){
+          if (text[i+1] === '"'){ cell += '"'; i++; }
+          else { inQuote = false; }
+        } else {
+          cell += c;
+        }
+      } else {
+        if (c === '"' && cellStart){
+          inQuote = true;
+          cellStart = false;
+        } else if (c === '\t'){
+          row.push(cell);
+          cell = '';
+          cellStart = true;
+        } else if (c === '\n' || c === '\r'){
+          if (c === '\r' && text[i+1] === '\n') i++;
+          row.push(cell);
+          rows.push(row);
+          row = [];
+          cell = '';
+          cellStart = true;
+        } else {
+          cell += c;
+          cellStart = false;
+        }
+      }
+    }
+    if (cell.length > 0 || row.length > 0){
+      row.push(cell);
+      rows.push(row);
+    }
+    return rows.filter(r => r.some(c => (c||'').trim() !== ''));
+  }
+
+  // --- セル単位の型判定 ---
+  function isDateCell(s){
+    const t = (s||'').trim();
+    if (!t) return false;
+    if (/^\d{4}[\/\-年]\s?\d{1,2}[\/\-月]\s?\d{1,2}日?$/.test(t)) return true;
+    if (/^\d{1,2}[\/\-月]\s?\d{1,2}日?(?:\s?\([日月火水木金土]\))?$/.test(t)) return true;
+    return false;
+  }
+  function isTimeCell(s){
+    const t = (s||'').trim();
+    if (!t) return false;
+    return /^\d{1,2}[:時](\d{1,2})?(:\d{1,2})?分?半?$/.test(t);
+  }
+  function isPhoneCell(s){
+    const t = (s||'').trim();
+    if (!t) return false;
+    const digits = t.replace(/[^\d]/g, '');
+    if (digits.length < 10 || digits.length > 11) return false;
+    return RE.phoneLoose.test(t);
+  }
+  function isPriorityCell(s){
+    return /^(最優先|優先|通常|低|高|中|S|A|B|C)$/.test((s||'').trim());
+  }
+
+  // --- 面談形式の自動推定 ---
+  function detectMeetingType(text, fallback){
+    if (!text) return fallback;
+    if (/オンライン|ＷＥＢ|web|zoom|teams|google\s*meet|meet\b/i.test(text)) return 'オンライン';
+    if (/日程調整中|調整中|候補日|どちらか|いずれか/.test(text)) return '日程調整中';
+    if (/訪問希望|来訪希望|来社希望|希望/.test(text)) return '訪問希望';
+    if (/確定|決定|お時間|アポ獲得/.test(text)) return '日程確定';
+    return fallback;
+  }
+
+  // --- 日時抽出 ---
+  // 日付と時刻を別々に走査して、各日付に対し「次の日付までの範囲」内にある最初の時刻をペアリング
+  function extractDateTime(text){
+    if (!text) return [];
+    const dateRe = /(\d{4})[\/\-年]\s?(\d{1,2})[\/\-月]\s?(\d{1,2})日?|(\d{1,2})[\/\-月]\s?(\d{1,2})日?/g;
+    const timeRe = /(?:午前|午後|AM|PM|A\.M\.|P\.M\.)?\s?(\d{1,2})[:時]\s?(\d{0,2})\s?(?:分)?(半)?/g;
+
+    const dates = [];
+    let m;
+    while ((m = dateRe.exec(text)) !== null){
+      let dateStr;
+      if (m[1]) dateStr = `${m[1]}/${m[2]}/${m[3]}`;
+      else dateStr = `${m[4]}/${m[5]}`;
+      dates.push({ date: dateStr, idx: m.index, len: m[0].length });
+    }
+
+    const times = [];
+    while ((m = timeRe.exec(text)) !== null){
+      const hh = m[1];
+      let mm = m[2] || '';
+      if (m[3]) mm = '30';
+      let timeStr;
+      if (mm){
+        if (mm.length === 1) mm = '0' + mm;
+        timeStr = `${hh}:${mm}`;
+      } else {
+        timeStr = `${hh}時`;
+      }
+      // 日付内の数字に重ならないようチェック（後で除外）
+      times.push({ time: timeStr, idx: m.index, len: m[0].length });
+    }
+
+    const out = [];
+    dates.forEach((d, i) => {
+      const nextDateIdx = i + 1 < dates.length ? dates[i+1].idx : text.length;
+      const searchStart = d.idx + d.len;
+      const searchEnd = nextDateIdx;
+      const tCand = times.find(t => t.idx >= searchStart && t.idx + t.len <= searchEnd);
+      const timeStr = tCand ? tCand.time : '';
+      const ctxEnd = Math.min(text.length, (tCand ? tCand.idx + tCand.len : searchStart) + 25);
+      const ctx = text.substring(Math.max(0, d.idx - 25), ctxEnd);
+      out.push({ date: d.date, time: timeStr, idx: d.idx, ctx });
+    });
+    return out;
+  }
+
+  // --- パース：ヘッダー付き ---
+  function parseRowWithHeader(line, headerMap){
+    const cells = line.split('\t').map(s => s.trim());
+    const fields = {
+      priority: '', no: '', corporation: '', facility: '', address: '',
+      phone: '', person: '', mail: '', schedule: '', note: ''
+    };
+    const personCells = [];
+    const callRounds = [];
+    let cur = null;
+
+    cells.forEach((cell, i) => {
+      const type = headerMap[i];
+      if (!type) return;
+      if (type === 'call_date'){
+        if (cur) callRounds.push(cur);
+        cur = cell ? { date: cell } : {};
+      } else if (type === 'call_time'){
+        if (!cur) cur = {};
+        if (cell) cur.time = cell;
+      } else if (type === 'call_result'){
+        if (!cur) cur = {};
+        if (cell) cur.result = cell;
+      } else if (type === 'call_comment'){
+        if (!cur) cur = {};
+        if (cell) cur.comment = cell;
+      } else if (type === 'phone'){
+        if (cell && !fields.phone) fields.phone = normalizePhone(cell);
+      } else if (type === 'mail'){
+        if (cell && !fields.mail) fields.mail = normalizeMail(cell);
+      } else if (type === 'person'){
+        if (cell) personCells.push(cell);
+      } else if (fields[type] !== undefined && cell && !fields[type]){
+        fields[type] = cell;
+      }
+    });
+    if (cur && Object.keys(cur).length) callRounds.push(cur);
+
+    fields.person = extractPersonFromHeader(personCells, cells);
+
+    // 「電話番号」列がなかった場合のフォールバック
+    if (!fields.phone){
+      for (const c of cells){
+        if (RE.phone.test(c)){ fields.phone = normalizePhone(c); break; }
+      }
+    }
+
+    const validCalls = callRounds.filter(c => c.date || c.result || c.comment || c.time);
+    return finalizeRecord(fields, validCalls);
+  }
+
+  // --- パース：ヘッダーなし（スマート推定） ---
+  // 構造を自動推定：先頭はベース情報、最初の日付セル以降は架電履歴の繰り返し
+  function parseSmartRow(cells){
+    cells = cells.map(s => (s||'').trim());
+
+    // タブ区切りでなく、カンマ区切り・スペース区切りの場合の対応
+    if (cells.length === 1){
+      const line = cells[0];
+      if ((line.match(/,/g)||[]).length >= 3) cells = line.split(',').map(s=>s.trim());
+      else if (/[ 　]{2,}/.test(line)) cells = line.split(/[ 　]{2,}/).map(s=>s.trim());
+    }
+
+    // 最初の「日付セル」位置を検出
+    let firstDateIdx = -1;
+    for (let i = 0; i < cells.length; i++){
+      if (isDateCell(cells[i])){ firstDateIdx = i; break; }
+    }
+
+    const baseCells = firstDateIdx >= 0 ? cells.slice(0, firstDateIdx) : cells.slice();
+    const tailCells = firstDateIdx >= 0 ? cells.slice(firstDateIdx) : [];
+
+    // ベース情報の分類
+    const fields = {
+      priority: '', no: '', corporation: '', facility: '', address: '',
+      phone: '', person: '', mail: ''
+    };
+    const personCandidates = [];
+
+    baseCells.forEach(c => {
+      if (!c) return;
+      // メール
+      if (RE.mailLoose.test(c)){
+        if (!fields.mail) fields.mail = normalizeMail(c);
+        return;
+      }
+      // 電話
+      if (isPhoneCell(c)){
+        if (!fields.phone) fields.phone = normalizePhone(c);
+        return;
+      }
+      // 優先度
+      if (isPriorityCell(c)){
+        if (!fields.priority) fields.priority = c;
+        return;
+      }
+      // No.
+      if (/^\d+$/.test(c) && c.length <= 4){
+        if (!fields.no) { fields.no = c; return; }
+      }
+      // 住所（都道府県・市区町村を含むかつ番地っぽい）
+      if (RE.address.test(c) && c.length >= 6 && !fields.address){
+        fields.address = c;
+        return;
+      }
+      // 法人名 vs 施設名
+      if (RE.facility.test(c)){
+        const isCorp = /(株式会社|有限会社|合同会社|社会福祉法人|医療法人|学校法人|一般財団法人|公益財団法人|NPO法人|\(株\)|（株）|HD|ホールディングス|グループ|商事|不動産|電鉄|販売|建設|工業|製作所|食品|物産|機構|協会|学園)/.test(c);
+        if (isCorp && !fields.corporation){ fields.corporation = c; return; }
+        if (!fields.facility){ fields.facility = c; return; }
+        if (!fields.corporation){ fields.corporation = c; return; }
+      }
+      personCandidates.push(c);
+    });
+
+    // 担当者：「様」付きを最優先、なければ残りセルの最初を採用
+    fields.person = extractPersonFromHeader(personCandidates, personCandidates);
+    if (!fields.person && personCandidates.length){
+      const cand = personCandidates.find(c => c.length <= 30 && !RE.address.test(c) && !RE.facility.test(c));
+      if (cand) fields.person = normalizePerson(cand);
+    }
+
+    // 架電履歴：（日付, [時刻], [結果], [コメント]）の繰り返し
+    const callRounds = [];
+    let i = 0;
+    while (i < tailCells.length){
+      if (!isDateCell(tailCells[i])){ i++; continue; }
+      const round = { date: tailCells[i] };
+      i++;
+      if (i < tailCells.length && isTimeCell(tailCells[i])){
+        round.time = tailCells[i]; i++;
+      }
+      // 結果セル：短いテキストで、日付・時刻・空でない
+      if (i < tailCells.length && tailCells[i] && !isDateCell(tailCells[i]) && !isTimeCell(tailCells[i]) && tailCells[i].length <= 30){
+        round.result = tailCells[i]; i++;
+      } else if (i < tailCells.length && tailCells[i] === ''){
+        i++; // 空欄スキップ
+      }
+      // コメントセル：次が日付でなければコメント
+      if (i < tailCells.length && !isDateCell(tailCells[i])){
+        if (tailCells[i]) round.comment = tailCells[i];
+        i++;
+      }
+      callRounds.push(round);
+    }
+
+    return finalizeRecord(fields, callRounds);
+  }
+
+  // --- 共通：最終出力用のレコード生成 ---
+  function finalizeRecord(fields, callRounds){
+    // 重複ラウンド除去
+    const seen = new Set();
+    const uniqueCalls = [];
+    callRounds.forEach(r => {
+      const sig = `${r.date||''}|${r.time||''}|${r.result||''}|${(r.comment||'').slice(0,20)}`;
+      if (seen.has(sig)) return;
+      seen.add(sig);
+      uniqueCalls.push(r);
+    });
+
+    const allComments = uniqueCalls.map(c => c.comment || '').filter(Boolean);
+    const allCommentsText = allComments.join('\n');
+
+    // クロスラウンド：メール
+    if (!fields.mail){
+      const m = allCommentsText.match(RE.mailLoose);
+      if (m) fields.mail = m[1];
+    }
+
+    // クロスラウンド：支店名と特定電話（「○○に担当いる0123-...」パターン）
+    let branchName = '';
+    let branchPhone = '';
+    for (const cm of allComments){
+      if (!branchName){
+        const bm = cm.match(/([一-龥ぁ-んァ-ヴー々]{2,15}?)(?:に担当|担当いる|の方が担当|の担当|担当者は)/);
+        if (bm) branchName = bm[1];
+      }
+      if (!branchPhone){
+        const phm = cm.match(RE.phoneLoose);
+        if (phm){
+          const phoneStr = normalizePhone(phm[1]);
+          if (phoneStr !== fields.phone) branchPhone = phoneStr;
+        }
+      }
+      if (branchName && branchPhone) break;
+    }
+
+    // 電話番号：コメント中の特定電話があれば優先
+    const finalPhone = branchPhone || fields.phone || '';
+
+    // 担当者：コメント中の「○○様」があれば優先
+    let finalPerson = '';
+    for (const cm of allComments){
+      const samaName = extractSamaName(cm);
+      if (samaName){ finalPerson = samaName; break; }
+    }
+    if (!finalPerson) finalPerson = fields.person || '';
+
+    // 施設名：施設 (+ 支店) を優先、なければ法人名
+    let facilityCombined = fields.facility || fields.corporation || '';
+    if (branchName){
+      facilityCombined = facilityCombined ? (facilityCombined + '　' + branchName) : branchName;
+    }
+
+    // アポ獲得ラウンドを優先採用
+    const apoCall = [...uniqueCalls].reverse().find(c => RE.apoResult.test(c.result || ''));
+    const latest = apoCall || (uniqueCalls.length ? uniqueCalls[uniqueCalls.length - 1] : null);
+
+    // 日程：種別キーワード優先。時刻に「以降/頃/あたり/前後」など曖昧表現があれば種別のみ採用
+    let scheduleStr = '';
+    if (latest){
+      const cm = latest.comment || '';
+      const mt = detectMeetingType(cm, null);
+      const dts = extractDateTime(cm);
+      const hasTime = dts.length > 0 && dts[0].time;
+      const dateTimeStr = dts.length ? (dts[0].date + (dts[0].time ? ' ' + dts[0].time : '')) : '';
+      const uncertain = /(以降|以前|頃|あたり|前後|そのあたり|くらい|ぐらい)/.test(cm);
+
+      if (mt && uncertain){
+        scheduleStr = mt; // 時刻が曖昧 → 種別のみ
+      } else if (mt === 'オンライン' || mt === '日程調整中'){
+        scheduleStr = mt;
+        if (hasTime) scheduleStr += '（' + dateTimeStr + '）';
+      } else if (mt === '訪問希望' || mt === '日程確定'){
+        scheduleStr = hasTime ? (dateTimeStr + '（' + mt + '）') : (dts.length ? (dts[0].date + ' ' + mt) : mt);
+      } else if (dateTimeStr) {
+        scheduleStr = dateTimeStr;
+      }
+    }
+
+    // 備考：アポ獲得ラウンドのコメントをそのまま（改行整理のみ）
+    let noteStr = '';
+    if (latest && latest.comment){
+      noteStr = latest.comment.replace(/\r/g, '').replace(/\n{2,}/g, '\n').trim();
+    }
+
+    const warnings = [];
+    if (!finalPhone) warnings.push('電話番号なし');
+    if (!finalPerson) warnings.push('担当者名なし');
+    if (!facilityCombined) warnings.push('施設名なし');
+    if (!scheduleStr && latest && RE.apoResult.test(latest.result || '')){
+      warnings.push('日程未抽出／要確認');
+    }
+
+    return {
+      schedule: scheduleStr,
+      facility: facilityCombined,
+      person: finalPerson,
+      phone: finalPhone,
+      mail: fields.mail || '',
+      note: noteStr,
+      warnings
+    };
+  }
+
+  // --- レンダリング ---
+  let records = [];
+
+  function renderReportText(r){
+    const name = reporter.value.trim();
+    const mentions = getActiveMentions();
+    let out = '';
+    if (mentions) out += mentions + '\n';
+    out += '【アポ獲得報告】\n'
+      + '日程：' + (r.schedule || '') + '\n'
+      + '施設名：' + (r.facility || '') + '\n'
+      + '担当者名：' + (r.person || '') + '\n'
+      + '電話番号：' + (r.phone || '') + '\n'
+      + 'メールアドレス：' + (r.mail || '') + '\n'
+      + '備考：' + (r.note || '');
+    if (name) out += '\n報告者：' + name;
+    return out;
+  }
+
+  function escapeHtml(s){
+    return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function makeCardHTML(r, i){
+    const reportText = renderReportText(r);
+    const warnHtml = r.warnings && r.warnings.length
+      ? r.warnings.map(w => `<span class="warn" data-warn="${escapeHtml(w)}">⚠ ${escapeHtml(w)}</span>`).join(' ')
+      : '';
+    const idxLabel = records.length > 1 ? `<span class="result-index">#${i + 1}</span>` : '';
+    const hasWarn = r.warnings && r.warnings.length ? ' has-warn' : '';
+
+    return `
+      <div class="result-card${hasWarn}" data-idx="${i}">
+        <div class="result-head">
+          <div class="result-title">${idxLabel}<span>出力結果</span> ${warnHtml}</div>
+          <div class="result-actions">
+            <button class="card-copy primary">📋 コピー</button>
+            <button class="card-edit">✎ 修正</button>
+            ${records.length > 1 ? '<button class="card-remove ghost">削除</button>' : ''}
+          </div>
+        </div>
+        <div class="edit-panel">
+          <div class="field-row" data-field="schedule"><span class="field-label">日程</span><input class="field-edit" data-key="schedule" value="${escapeHtml(r.schedule)}"/></div>
+          <div class="field-row" data-field="facility"><span class="field-label">施設名</span><input class="field-edit" data-key="facility" value="${escapeHtml(r.facility)}"/></div>
+          <div class="field-row" data-field="person"><span class="field-label">担当者名</span><input class="field-edit" data-key="person" value="${escapeHtml(r.person)}"/></div>
+          <div class="field-row" data-field="phone"><span class="field-label">電話番号</span><input class="field-edit" data-key="phone" value="${escapeHtml(r.phone)}"/></div>
+          <div class="field-row" data-field="mail"><span class="field-label">メール</span><input class="field-edit" data-key="mail" value="${escapeHtml(r.mail)}"/></div>
+          <div class="field-row" data-field="note" style="align-items: start;"><span class="field-label" style="padding-top:6px;">備考</span><textarea class="field-edit" data-key="note" style="min-height:80px;">${escapeHtml(r.note)}</textarea></div>
+        </div>
+        <div class="body">${escapeHtml(reportText)}</div>
+      </div>
+    `;
+  }
+
+  // 警告 → 対応するフィールド
+  const WARN_FIELD_MAP = {
+    '電話番号なし': 'phone',
+    '担当者名なし': 'person',
+    '施設名なし': 'facility',
+    '施設名は推定': 'facility',
+    '日程未抽出／要確認': 'schedule'
+  };
+
+  function renderAll(){
+    if (!records.length){
+      results.innerHTML = '';
+      copyAllBtn.style.display = 'none';
+      summaryBar.style.display = 'none';
+      return;
+    }
+    results.innerHTML = records.map((r, i) => makeCardHTML(r, i)).join('');
+    copyAllBtn.style.display = records.length >= 2 ? 'inline-block' : 'none';
+
+    summaryBar.style.display = 'flex';
+    summaryCount.textContent = records.length;
+    const warnCount = records.reduce((s, r) => s + (r.warnings ? r.warnings.length : 0), 0);
+    summaryWarn.innerHTML = warnCount > 0
+      ? `<span style="color:#854f0b;">⚠ ${warnCount}件の警告</span>`
+      : `<span style="color:#0f6e56;">✓ 警告なし</span>`;
+
+    bindCardEvents();
+  }
+
+  function bindCardEvents(){
+    results.querySelectorAll('.result-card').forEach(card => {
+      const idx = +card.dataset.idx;
+
+      card.querySelector('.card-copy').addEventListener('click', e => {
+        const btn = e.currentTarget;
+        navigator.clipboard.writeText(renderReportText(records[idx])).then(()=>{
+          btn.classList.remove('primary');
+          btn.classList.add('ok');
+          btn.textContent = '✓ コピー済';
+          setTimeout(()=>{
+            btn.classList.add('primary');
+            btn.classList.remove('ok');
+            btn.textContent = '📋 コピー';
+          }, 1500);
+        });
+      });
+
+      card.querySelector('.card-edit').addEventListener('click', ()=>{
+        card.querySelector('.edit-panel').classList.toggle('open');
+      });
+
+      const removeBtn = card.querySelector('.card-remove');
+      if (removeBtn){
+        removeBtn.addEventListener('click', ()=>{
+          records.splice(idx, 1);
+          renderAll();
+        });
+      }
+
+      card.querySelectorAll('.field-edit').forEach(inp=>{
+        inp.addEventListener('input', ()=>{
+          records[idx][inp.dataset.key] = inp.value;
+          card.querySelector('.body').textContent = renderReportText(records[idx]);
+        });
+      });
+
+      card.querySelectorAll('.warn').forEach(w=>{
+        w.addEventListener('click', ()=>{
+          const panel = card.querySelector('.edit-panel');
+          panel.classList.add('open');
+          const fieldName = WARN_FIELD_MAP[w.dataset.warn];
+          if (fieldName){
+            const row = card.querySelector(`.field-row[data-field="${fieldName}"]`);
+            const inp = row && row.querySelector('.field-edit');
+            if (inp){
+              card.querySelectorAll('.field-row').forEach(r=>r.classList.remove('focused'));
+              row.classList.add('focused');
+              setTimeout(()=>{ inp.focus(); inp.select && inp.select(); }, 50);
+            }
+          }
+        });
+      });
+    });
+  }
+
+  // --- パース実行 ---
+  function doParse(){
+    // 引用符付きセル（改行を含むGoogleスプレッドシートのコピペ）を正しく分解
+    const rows = parseTSV(input.value);
+    if (!rows.length){
+      records = [];
+      renderAll();
+      return;
+    }
+
+    // ヘッダー検出は1行目のセル列で判定
+    let headerMap = null;
+    let dataRows = rows;
+    if (rows.length >= 2 && detectHeader(rows[0].join('\t'))){
+      headerMap = rows[0].map(h => classifyHeader(h));
+      dataRows = rows.slice(1);
+    }
+    dataRows = dataRows.filter(cells => cells.some(c => (c||'').trim()));
+
+    records = dataRows.map(cells => {
+      if (headerMap){
+        // ヘッダー有りの場合はラインに戻して既存ロジック流用
+        return parseRowWithHeader(cells.join('\t'), headerMap);
+      }
+      return parseSmartRow(cells);
+    });
+
+    renderAll();
+    if (records.length > 0){
+      const first = results.querySelector('.result-card');
+      if (first) first.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  parseBtn.addEventListener('click', doParse);
+
+  // --- 入力欄のショートカット & 自動拡張 ---
+  input.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter'){
+      e.preventDefault();
+      doParse();
+    }
+    if (e.key === 'Escape'){
+      input.value = '';
+      records = [];
+      renderAll();
+      autoResize();
+    }
+  });
+
+  function autoResize(){
+    input.style.height = 'auto';
+    input.style.height = Math.min(Math.max(input.scrollHeight + 4, 130), 400) + 'px';
+  }
+  input.addEventListener('input', autoResize);
+
+  // --- 全件コピー ---
+  copyAllBtn.addEventListener('click', ()=>{
+    if (!records.length) return;
+    const all = records.map(r => renderReportText(r)).join('\n\n---\n\n');
+    navigator.clipboard.writeText(all).then(()=>{
+      copyAllBtn.classList.add('ok');
+      copyAllBtn.textContent = '✓ コピー済';
+      setTimeout(()=>{
+        copyAllBtn.classList.remove('ok');
+        copyAllBtn.textContent = '📋 全件コピー';
+      }, 1500);
+    });
+  });
+
+  // --- サンプル ---
+  // ヘッダーなし・引用符付き複数行セル・複数ラウンドの実データに近い形
+  sampleBtn.addEventListener('click', ()=>{
+    input.value =
+      '\t\t医療法人社団親和会\t住宅型有料老人ホーム　アフィニティーすいせん\t飯塚市伊岐須166-6\t0948-43-3340\tイン岩崎\t2026/04/02\t15:28:01\tアポ獲得\t"本日休み、来週火水木出勤\n\n5/12 訪問希望　大体14:30以降であればありがたいとのこと"\t1/28\t9:44\t不在\tつつじの丘に担当いる0948-57-4150\t2/6\t9:56\t資料請求\t人足りなくて時間取れないため資料着地、徳田様ti@f-shinwakai.or.jp\t2026/04/02\t15:28:01\tアポ獲得\t"本日休み、来週火水木出勤\n\n5/12 訪問希望　大体14:30以降であればありがたいとのこと"\t';
+    autoResize();
+    doParse();
+  });
+
+  clearBtn.addEventListener('click', ()=>{
+    input.value = '';
+    records = [];
+    renderAll();
+    autoResize();
+    input.focus();
+  });
+})();
+</script>
+
+
+</body></html>
