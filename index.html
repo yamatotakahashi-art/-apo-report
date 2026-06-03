@@ -121,6 +121,18 @@
       <div id="signature-list"></div>
       <button id="signature-add" class="ghost">+ 送信者を追加</button>
     </div>
+
+    <!-- 案件選択（メールモード用） -->
+    <div class="name-row mode-mail hidden">
+      <label>案件</label>
+      <select id="case-select"><option value="-1">（案件を選択 / 手入力）</option></select>
+      <button id="case-edit-btn" class="ghost">編集</button>
+    </div>
+    <div class="project-panel mode-mail hidden" id="case-panel" style="display:none;">
+      <div class="project-help">案件ごとに「面談内容・ご案内サービス名・サービスURL」を登録すると、案件を選んだとき下の欄へ自動入力されます。Slackメンションと共通の案件リストです。</div>
+      <div id="case-list"></div>
+      <button id="case-add" class="ghost">+ 案件を追加</button>
+    </div>
   </header>
 
   <!-- 共通：スプシ貼り付けパネル -->
@@ -199,6 +211,8 @@
   const projectList = $('project-list'), projectAddBtn = $('project-add');
   const sigSelect = $('signature-select'), sigEditBtn = $('signature-edit-btn'), sigPanel = $('signature-panel');
   const sigList = $('signature-list'), sigAddBtn = $('signature-add');
+  const caseSelect = $('case-select'), caseEditBtn = $('case-edit-btn'), casePanel = $('case-panel');
+  const caseList = $('case-list'), caseAddBtn = $('case-add');
 
   // ===== モード定義 =====
   const MODE_CONFIG = {
@@ -224,11 +238,52 @@
     projectList.innerHTML=projects.map((p,i)=>`<div class="project-item" data-idx="${i}"><input class="project-name" value="${escapeHtml(p.name||'')}" placeholder="プロジェクト名"/><input class="project-mentions" value="${escapeHtml(p.mentions||'')}" placeholder="@田中 @鈴木"/><button class="project-remove" type="button">削除</button></div>`).join('');
     projectList.querySelectorAll('.project-item').forEach(item=>{ const idx=+item.dataset.idx,n=item.querySelector('.project-name'),m=item.querySelector('.project-mentions'); const upd=(()=>{let t;return()=>{clearTimeout(t);t=setTimeout(()=>{projects[idx].name=n.value;projects[idx].mentions=m.value;saveProjects();renderProjectSelect();renderAll();},300);};})(); n.addEventListener('input',upd); m.addEventListener('input',upd); item.querySelector('.project-remove').addEventListener('click',()=>{projects.splice(idx,1); if(selectedProjectIdx===idx)selectedProjectIdx=-1; else if(selectedProjectIdx>idx)selectedProjectIdx--; saveProjects();renderProjectList();renderProjectSelect();renderAll();}); });
   }
-  loadProjects(); renderProjectSelect(); renderProjectList();
+  loadProjects();
+  if(!projects.length){
+    projects=[{ name:'阪急阪神', mentions:'', content:'阪急阪神百貨店のデパ地下スイーツの訪問販売のご相談', serviceName:'阪急百貨店のデパ地下スイーツの移動販売', serviceUrl:'https://website.hankyu-dept.co.jp/hashiru_depachika/' }];
+    saveProjects();
+  }
+  renderProjectSelect(); renderProjectList();
   projectSelect.addEventListener('change',()=>{selectedProjectIdx=parseInt(projectSelect.value,10); if(isNaN(selectedProjectIdx))selectedProjectIdx=-1; saveProjects(); renderAll();});
   projectEditBtn.addEventListener('click',()=>{const o=projectPanel.style.display!=='none'; projectPanel.style.display=o?'none':'block'; projectEditBtn.textContent=o?'編集':'閉じる';});
-  projectAddBtn.addEventListener('click',()=>{projects.push({name:'',mentions:''});saveProjects();renderProjectList();renderProjectSelect();const it=projectList.querySelectorAll('.project-item');const l=it[it.length-1];if(l)l.querySelector('.project-name').focus();});
+  projectAddBtn.addEventListener('click',()=>{projects.push({name:'',mentions:'',content:'',serviceName:'',serviceUrl:''});saveProjects();renderProjectList();renderProjectSelect();const it=projectList.querySelectorAll('.project-item');const l=it[it.length-1];if(l)l.querySelector('.project-name').focus();});
   function getActiveMentions(){ if(selectedProjectIdx<0||!projects[selectedProjectIdx])return ''; return (projects[selectedProjectIdx].mentions||'').trim(); }
+
+  // ===== 案件セレクタ（メールモード：projectsを共有） =====
+  let selectedCaseIdx=-1;
+  function renderCaseSelect(){
+    caseSelect.innerHTML='<option value="-1">（案件を選択 / 手入力）</option>'+projects.map((p,i)=>`<option value="${i}" ${i===selectedCaseIdx?'selected':''}>${escapeHtml(p.name||'（無名）')}</option>`).join('');
+    caseSelect.value=String(selectedCaseIdx);
+  }
+  function renderCaseList(){
+    caseList.innerHTML=projects.map((p,i)=>`
+      <div class="sig-item" data-idx="${i}">
+        <div class="sig-row"><span style="font-size:12px;color:#5f5e5a;">案件名</span><input class="c-name" value="${escapeHtml(p.name||'')}" placeholder="例：阪急阪神"/><button class="c-remove project-remove" type="button">削除</button></div>
+        <div class="sig-row"><span style="font-size:12px;color:#5f5e5a;">面談内容</span><input class="c-content" value="${escapeHtml(p.content||'')}" placeholder="例：阪急阪神百貨店のデパ地下スイーツの訪問販売のご相談"/><span></span></div>
+        <div class="sig-row"><span style="font-size:12px;color:#5f5e5a;">サービス名</span><input class="c-svcname" value="${escapeHtml(p.serviceName||'')}" placeholder="例：阪急百貨店のデパ地下スイーツの移動販売"/><span></span></div>
+        <div class="sig-row"><span style="font-size:12px;color:#5f5e5a;">サービスURL</span><input class="c-svcurl" value="${escapeHtml(p.serviceUrl||'')}" placeholder="https://..."/><span></span></div>
+        <div class="sig-row"><span style="font-size:12px;color:#5f5e5a;">Slackメンション</span><input class="c-mentions" value="${escapeHtml(p.mentions||'')}" placeholder="@田中 @鈴木"/><span></span></div>
+      </div>`).join('');
+    caseList.querySelectorAll('.sig-item').forEach(item=>{
+      const idx=+item.dataset.idx;
+      const els={ name:item.querySelector('.c-name'), content:item.querySelector('.c-content'), serviceName:item.querySelector('.c-svcname'), serviceUrl:item.querySelector('.c-svcurl'), mentions:item.querySelector('.c-mentions') };
+      const upd=(()=>{let t;return()=>{clearTimeout(t);t=setTimeout(()=>{ projects[idx].name=els.name.value; projects[idx].content=els.content.value; projects[idx].serviceName=els.serviceName.value; projects[idx].serviceUrl=els.serviceUrl.value; projects[idx].mentions=els.mentions.value; saveProjects(); renderProjectSelect(); renderCaseSelect(); if(idx===selectedCaseIdx)applyCaseToFields(idx); renderAll(); },300);};})();
+      Object.values(els).forEach(el=>el.addEventListener('input',upd));
+      item.querySelector('.c-remove').addEventListener('click',()=>{ projects.splice(idx,1); if(selectedCaseIdx===idx)selectedCaseIdx=-1; else if(selectedCaseIdx>idx)selectedCaseIdx--; if(selectedProjectIdx===idx)selectedProjectIdx=-1; else if(selectedProjectIdx>idx)selectedProjectIdx--; saveProjects(); renderCaseList(); renderCaseSelect(); renderProjectSelect(); renderProjectList(); renderAll(); });
+    });
+  }
+  function applyCaseToFields(idx){
+    const p=projects[idx]; if(!p)return;
+    if($('m-content'))$('m-content').value=p.content||'';
+    if($('m-service-name'))$('m-service-name').value=p.serviceName||'';
+    if($('m-service-url'))$('m-service-url').value=p.serviceUrl||'';
+    if($('d-service-name'))$('d-service-name').value=p.serviceName||'';
+    if($('d-service-url'))$('d-service-url').value=p.serviceUrl||'';
+  }
+  renderCaseSelect(); renderCaseList();
+  caseSelect.addEventListener('change',()=>{ selectedCaseIdx=parseInt(caseSelect.value,10); if(isNaN(selectedCaseIdx))selectedCaseIdx=-1; if(selectedCaseIdx>=0)applyCaseToFields(selectedCaseIdx); renderAll(); });
+  caseEditBtn.addEventListener('click',()=>{const o=casePanel.style.display!=='none'; casePanel.style.display=o?'none':'block'; caseEditBtn.textContent=o?'編集':'閉じる';});
+  caseAddBtn.addEventListener('click',()=>{ projects.push({name:'',mentions:'',content:'',serviceName:'',serviceUrl:''}); saveProjects(); renderCaseList(); renderCaseSelect(); renderProjectSelect(); renderProjectList(); const it=caseList.querySelectorAll('.sig-item'); const l=it[it.length-1]; if(l)l.querySelector('.c-name').focus(); });
 
   // ===== 署名（メール送信者） =====
   const SIG_KEY='alphadrive_signatures', SIG_SELECTED_KEY='alphadrive_signature_selected';
@@ -550,7 +605,7 @@
     $('mail-fields').classList.toggle('hidden',!isMail);
     $('help-report').classList.toggle('hidden',isMail);
     $('help-mail').classList.toggle('hidden',!isMail);
-    if(isMail){ $('mail-meeting-fields').classList.toggle('hidden',cfg.mailType!=='meeting'); $('mail-doc-fields').classList.toggle('hidden',cfg.mailType!=='doc'); }
+    if(isMail){ $('mail-meeting-fields').classList.toggle('hidden',cfg.mailType!=='meeting'); $('mail-doc-fields').classList.toggle('hidden',cfg.mailType!=='doc'); renderCaseSelect(); if(selectedCaseIdx>=0)applyCaseToFields(selectedCaseIdx); }
     // 再パース（同じ貼り付けで出力切替）
     if(input.value.trim())doParse(); else renderAll();
   }
