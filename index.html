@@ -459,6 +459,7 @@
     if(!finalPerson)warnings.push('担当者名なし');
     if(!facilityCombined)warnings.push('施設名なし');
     if(cfg.kind==='report'){
+      if(!fields.address)warnings.push('住所なし');
       if(wantDoc){ if(!fields.mail&&/メール|mail/i.test((latest&&latest.comment)||''))warnings.push('メールアドレスなし'); }
       else { if(!scheduleStr&&latest&&RE.apoResult.test(latest.result||''))warnings.push('日程未抽出／要確認'); }
     } else {
@@ -482,6 +483,7 @@
     out+=cfg.heading+'\n'
       +schedLabel+'：'+(r.schedule||'')+'\n'
       +'施設名：'+(r.facility||'')+'\n'
+      +'住所：'+(r.address||'')+'\n'
       +'担当者名：'+(r.person||'')+'\n'
       +'電話番号：'+(r.phone||'')+'\n'
       +'メールアドレス：'+(r.mail||'')+'\n'
@@ -522,6 +524,7 @@
          <div class="field-row" data-field="mail"><span class="field-label">メール</span><input class="field-edit" data-key="mail" value="${escapeHtml(r.mail)}"/></div>`
       : `<div class="field-row" data-field="schedule"><span class="field-label">${schedLabel}</span><input class="field-edit" data-key="schedule" value="${escapeHtml(r.schedule)}"/></div>
          <div class="field-row" data-field="facility"><span class="field-label">施設名</span><input class="field-edit" data-key="facility" value="${escapeHtml(r.facility)}"/></div>
+         <div class="field-row" data-field="address"><span class="field-label">住所</span><input class="field-edit" data-key="address" value="${escapeHtml(r.address)}"/></div>
          <div class="field-row" data-field="person"><span class="field-label">担当者名</span><input class="field-edit" data-key="person" value="${escapeHtml(r.person)}"/></div>
          <div class="field-row" data-field="phone"><span class="field-label">電話番号</span><input class="field-edit" data-key="phone" value="${escapeHtml(r.phone)}"/></div>
          <div class="field-row" data-field="mail"><span class="field-label">メール</span><input class="field-edit" data-key="mail" value="${escapeHtml(r.mail)}"/></div>
@@ -541,7 +544,7 @@
       </div>`;
   }
 
-  const WARN_FIELD_MAP={'電話番号なし':'phone','担当者名なし':'person','施設名なし':'facility','施設名は推定':'facility','メールアドレスなし':'mail','日程未抽出／要確認':'schedule'};
+  const WARN_FIELD_MAP={'電話番号なし':'phone','担当者名なし':'person','施設名なし':'facility','施設名は推定':'facility','住所なし':'address','メールアドレスなし':'mail','日程未抽出／要確認':'schedule'};
 
   function renderAll(){
     if(!records.length){results.innerHTML='';copyAllBtn.style.display='none';summaryBar.style.display='none';return;}
