@@ -128,8 +128,7 @@
     <div class="tabs">
       <div class="tab active" data-mode="apo">アポ獲得報告</div>
       <div class="tab" data-mode="doc">資料請求報告</div>
-      <div class="tab" data-mode="mail_meeting">面談案内メール</div>
-      <div class="tab" data-mode="mail_doc">資料送付メール</div>
+      <div class="tab" data-mode="mail">メール</div>
     </div>
 
     <!-- 報告者名（報告モード用） -->
@@ -174,6 +173,12 @@
       <button id="case-add" class="ghost">+ 案件を追加</button>
     </div>
 
+    <!-- メール種別（メールモード用） -->
+    <div class="status-row mode-mail hidden" id="mailtype-row">
+      <label>メール種別</label>
+      <div class="status-chips" id="mailtype-chips"></div>
+    </div>
+
     <!-- 相手ステータス（メールモード用） -->
     <div class="status-row mode-mail hidden" id="status-row">
       <label>相手の状況</label>
@@ -205,9 +210,10 @@
       <div id="tpl-editor"></div>
       <div class="ph-help">
         使える差し込みタグ：
-        <code>{宛名}</code> <code>{名乗り}</code> <code>{署名}</code> <code>{サービス名}</code> <code>{サービスURL}</code>
+        <code>{宛名}</code>（会社名／事業部／氏名様の3行を自動展開） <code>{会社名}</code> <code>{事業部}</code> <code>{氏名様}</code>
+        <code>{名乗り}</code> <code>{署名}</code> <code>{サービス名}</code> <code>{サービスURL}</code>
         <code>{日時}</code> <code>{リンク}</code> <code>{面談内容}</code> <code>{送付資料}</code> <code>{次回連絡}</code> <code>{施設名}</code>
-        <div class="lock-note">🔒 <code>{署名}</code><code>{サービスURL}</code> は差し込み専用です。本文に直書きせずタグのままにすると、登録済みの正しい値が自動で入り、事故を防げます。</div>
+        <div class="lock-note">🔒 <code>{署名}</code><code>{サービスURL}</code> は差し込み専用です。本文に直書きせずタグのままにすると、登録済みの正しい値が自動で入り、事故を防げます。<br>※ <code>{宛名}</code> は事業部が空のとき自動でその行を省きます。会社名・氏名様を個別に配置したい場合は <code>{会社名}</code> <code>{氏名様}</code> を使ってください。</div>
       </div>
     </div>
   </header>
@@ -221,6 +227,9 @@
 
     <!-- メールモード専用：差し込み項目 -->
     <div id="mail-fields" class="hidden">
+      <div class="field-grid">
+        <div class="fg-full"><label>宛名の事業部・部署（任意／空なら宛名から省略）</label><input id="m-dept" placeholder="例：新規事業開発部　※スプシから自動抽出を試みます"></div>
+      </div>
       <div class="field-grid" id="mail-meeting-fields">
         <div><label>面談日時</label><input id="m-datetime" placeholder="例：6/4(木) 16:00 - 16:45"></div>
         <div><label>面談リンク（Zoom等）</label><input id="m-link" placeholder="https://..."></div>
@@ -301,17 +310,20 @@
   let currentStatus = 'visit';
 
   // ===== 会社標準ひな形（第1層）の初期値＝叩き台 =====
-  const DEFAULT_TEMPLATES = {"meeting": {"visit": {"label": "訪問希望", "subject": "【{サービス名}】ご訪問の日程に関するご案内", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\nお打ち合わせにつきまして、下記の通りご案内申し上げます。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【ご訪問の詳細】\n日時：{日時}\n内容：{面談内容}\n※当日は貴社までお伺いいたします。\n\nご多用のところ恐れ入りますが、当日は何卒よろしくお願いいたします。\nご不明点等ございましたら、お気軽にご連絡くださいませ。\n\n{署名}"}, "online": {"label": "オンライン希望", "subject": "【{サービス名}】オンライン面談のご案内（{日時}）", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\nオンラインでのお打ち合わせにつきまして、下記の通りご案内申し上げます。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【ご面談の詳細】\n日時：{日時}\n内容：{面談内容}\nミーティングURL：{リンク}\n※お時間になりましたら上記URLよりご入室ください。\n\nご多用のところ恐れ入りますが、当日は何卒よろしくお願いいたします。\n\n{署名}"}, "internal": {"label": "社内展開希望", "subject": "【{サービス名}】社内ご検討用 資料のご送付", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\n社内でご共有いただける旨、承知いたしました。ご検討の一助となりますよう、概要を下記にまとめております。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【ご面談の詳細】\n日時：{日時}\n内容：{面談内容}\n\n社内ご展開の際にご不明な点や、追加でご入用の資料がございましたら、遠慮なくお申し付けください。\nご検討のほど、何卒よろしくお願いいたします。\n\n{署名}"}, "followup": {"label": "フォローコール確約済み", "subject": "【{サービス名}】本日のお電話のお礼と次回のご連絡について", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\nお伝えしましたサービスの概要を、改めて下記にご案内申し上げます。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【お打ち合わせ（予定）】\n日時：{日時}\n内容：{面談内容}\n\n次回、{日時}に改めてお電話にてご連絡を差し上げます。\nそれまでにご不明点等ございましたら、本メールへご返信くださいませ。\n引き続き何卒よろしくお願いいたします。\n\n{署名}"}, "other": {"label": "その他", "subject": "【{サービス名}】お打ち合わせに関するご案内", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【ご面談の詳細】\n日時：{日時}\n内容：{面談内容}\nリンク：{リンク}\n\n何卒よろしくお願いいたします。\n\n{署名}"}}, "doc": {"visit": {"label": "訪問希望", "subject": "【{サービス名}】資料ご送付と次回ご訪問について", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\nご依頼いただきました資料をお送りいたします。あわせて、ご訪問の機会をいただけますと幸いです。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\nご一読のうえ、改めてご訪問にてご説明の機会を頂戴できればと存じます。\n何卒よろしくお願いいたします。\n\n{署名}"}, "online": {"label": "オンライン希望", "subject": "【{サービス名}】資料ご送付とオンライン面談のご相談", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\nご依頼いただきました資料をお送りいたします。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\nご一読のうえ、ご不明点等ございましたら、オンラインにて簡単にご説明の機会を頂戴できればと存じます。\n何卒よろしくお願いいたします。\n\n{署名}"}, "internal": {"label": "社内展開希望", "subject": "【{サービス名}】社内ご検討用 資料のご送付", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\n社内でご共有いただける旨、承知いたしました。ご検討用に資料をお送りいたします。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\n社内ご展開の際に、追加でご入用の資料やご不明点がございましたら、お気軽にお申し付けください。\nご検討のほど、何卒よろしくお願いいたします。\n\n{署名}"}, "followup": {"label": "フォローコール確約済み", "subject": "【{サービス名}】資料ご送付と次回のご連絡について", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\nご依頼いただきました資料をお送りいたします。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\n改めて{次回連絡}\n何卒よろしくお願いいたします。\n\n{署名}"}, "other": {"label": "その他", "subject": "【{サービス名}】資料ご送付のご案内", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\nご依頼いただきました資料をお送りいたします。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\nご不明な点がございましたら、お気軽にお問い合わせください。\n{次回連絡}\n何卒よろしくお願いいたします。\n\n{署名}"}}};
+  const DEFAULT_TEMPLATES = {"meeting": {"visit": {"label": "訪問希望", "subject": "【{サービス名}】ご訪問の日程に関するご案内", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\nお打ち合わせにつきまして、下記の通りご案内申し上げます。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【ご訪問の詳細】\n日時：{日時}\n内容：{面談内容}\n※当日は貴社までお伺いいたします。\n\nご多用のところ恐れ入りますが、当日は何卒よろしくお願いいたします。\nご不明点等ございましたら、お気軽にご連絡くださいませ。\n\n{署名}"}, "online": {"label": "オンライン希望", "subject": "【{サービス名}】オンライン面談のご案内（{日時}）", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\nオンラインでのお打ち合わせにつきまして、下記の通りご案内申し上げます。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【ご面談の詳細】\n日時：{日時}\n内容：{面談内容}\nミーティングURL：{リンク}\n※お時間になりましたら上記URLよりご入室ください。\n\nご多用のところ恐れ入りますが、当日は何卒よろしくお願いいたします。\n\n{署名}"}, "internal": {"label": "社内展開希望", "subject": "【{サービス名}】社内ご検討用 資料のご送付", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\n社内でご共有いただける旨、承知いたしました。ご検討の一助となりますよう、概要を下記にまとめております。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【ご面談の詳細】\n日時：{日時}\n内容：{面談内容}\n\n社内ご展開の際にご不明な点や、追加でご入用の資料がございましたら、遠慮なくお申し付けください。\nご検討のほど、何卒よろしくお願いいたします。\n\n{署名}"}, "followup": {"label": "フォロー確約", "subject": "【{サービス名}】本日のお電話のお礼と次回のご連絡について", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\nお伝えしましたサービスの概要を、改めて下記にご案内申し上げます。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【お打ち合わせ（予定）】\n日時：{日時}\n内容：{面談内容}\n\n次回、{日時}に改めてお電話にてご連絡を差し上げます。\nそれまでにご不明点等ございましたら、本メールへご返信くださいませ。\n引き続き何卒よろしくお願いいたします。\n\n{署名}"}, "other": {"label": "その他", "subject": "【{サービス名}】お打ち合わせに関するご案内", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【ご面談の詳細】\n日時：{日時}\n内容：{面談内容}\nリンク：{リンク}\n\n何卒よろしくお願いいたします。\n\n{署名}"}}, "doc": {"visit": {"label": "訪問希望", "subject": "【{サービス名}】資料ご送付と次回ご訪問について", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\nご依頼いただきました資料をお送りいたします。あわせて、ご訪問の機会をいただけますと幸いです。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\nご一読のうえ、改めてご訪問にてご説明の機会を頂戴できればと存じます。\n何卒よろしくお願いいたします。\n\n{署名}"}, "online": {"label": "オンライン希望", "subject": "【{サービス名}】資料ご送付とオンライン面談のご相談", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\nご依頼いただきました資料をお送りいたします。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\nご一読のうえ、ご不明点等ございましたら、オンラインにて簡単にご説明の機会を頂戴できればと存じます。\n何卒よろしくお願いいたします。\n\n{署名}"}, "internal": {"label": "社内展開希望", "subject": "【{サービス名}】社内ご検討用 資料のご送付", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\n社内でご共有いただける旨、承知いたしました。ご検討用に資料をお送りいたします。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\n社内ご展開の際に、追加でご入用の資料やご不明点がございましたら、お気軽にお申し付けください。\nご検討のほど、何卒よろしくお願いいたします。\n\n{署名}"}, "followup": {"label": "フォロー確約", "subject": "【{サービス名}】資料ご送付と次回のご連絡について", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\nご依頼いただきました資料をお送りいたします。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\n改めて{次回連絡}\n何卒よろしくお願いいたします。\n\n{署名}"}, "other": {"label": "その他", "subject": "【{サービス名}】資料ご送付のご案内", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\nご依頼いただきました資料をお送りいたします。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\nご不明な点がございましたら、お気軽にお問い合わせください。\n{次回連絡}\n何卒よろしくお願いいたします。\n\n{署名}"}}};
 
   // ===== モード定義 =====
   const MODE_CONFIG = {
     apo:  { kind:'report', title:'アポ獲得報告ジェネレーター', sub:'スプレッドシートからコピペ → Slack貼り付け用に整形（1件でも複数件でもOK）', heading:'【アポ獲得報告】', priorityResult:'apo' },
     doc:  { kind:'report', title:'資料請求報告ジェネレーター', sub:'スプレッドシートからコピペ → Slack貼り付け用に整形（1件でも複数件でもOK）', heading:'【資料請求報告】', priorityResult:'doc' },
-    mail_meeting: { kind:'mail', title:'面談案内メールジェネレーター', sub:'相手の状況を選ぶ → 宛名を差し込んだ面談案内メールを生成', mailType:'meeting' },
-    mail_doc:     { kind:'mail', title:'資料送付メールジェネレーター', sub:'相手の状況を選ぶ → 宛名を差し込んだ資料送付メールを生成', mailType:'doc' }
+    mail: { kind:'mail', title:'メールジェネレーター', sub:'メール種別と相手の状況を選ぶ → 宛名を差し込んだメールを生成' }
   };
   let MODE = 'apo';
-  function mailKey(){ return MODE_CONFIG[MODE].mailType==='doc' ? 'doc' : 'meeting'; }
+  // メール種別（種別チップで切替）：'meeting' or 'doc'
+  const MAILTYPE_ORDER = ['meeting','doc'];
+  const MAILTYPE_LABEL = { meeting:'面談案内', doc:'資料送付' };
+  let currentMailType = 'meeting';
+  function mailKey(){ return currentMailType==='doc' ? 'doc' : 'meeting'; }
 
   // ===== localStorage（報告者・プロジェクト・署名） =====
   const STORAGE_KEY = 'alphadrive_reporter_name';
@@ -421,6 +433,23 @@
     statusChips.querySelectorAll('.status-chip').forEach(b=>b.addEventListener('click',()=>{ currentStatus=b.dataset.st; renderStatusChips(); if(tplPanel.style.display!=='none')renderTplEditor(); renderAll(); }));
   }
 
+  // ===== メール種別チップ描画 =====
+  const mailtypeChips=$('mailtype-chips');
+  function renderMailTypeChips(){
+    if(!mailtypeChips)return;
+    mailtypeChips.innerHTML=MAILTYPE_ORDER.map(mt=>`<button class="status-chip ${mt===currentMailType?'active':''}" data-mt="${mt}" style="${mt===currentMailType?'background:#185fa5;border-color:#185fa5;':''}">${escapeHtml(MAILTYPE_LABEL[mt]||mt)}</button>`).join('');
+    mailtypeChips.querySelectorAll('.status-chip').forEach(b=>b.addEventListener('click',()=>{
+      currentMailType=b.dataset.mt;
+      renderMailTypeChips();
+      // 差し込み欄の表示切替
+      $('mail-meeting-fields').classList.toggle('hidden',currentMailType!=='meeting');
+      $('mail-doc-fields').classList.toggle('hidden',currentMailType!=='doc');
+      if(tplPanel.style.display!=='none')renderTplEditor();
+      // 種別が変わると優先採用結果（アポ/資料）も変わるので再パース
+      if(input.value.trim())doParse(); else renderAll();
+    }));
+  }
+
   // ===== 管理者モード・テンプレ編集 =====
   adminToggle.checked=adminMode;
   document.body.classList.toggle('admin-on',adminMode);
@@ -479,6 +508,7 @@
     facility:['施設名','事業所名','店舗名','物件名','拠点名','ホーム名','施設'],
     address:['住所','所在地','所在'],
     rep:['代表者名','代表者','院長名','代表'],
+    dept_unit:['事業部','部署','部門','所属','課','部'],
     dept:['診療科目','診療科','科目','業種'],
     site:['サイトurl','サイト','url','ホームページ','hp','ｕｒｌ','webサイト'],
     phone:['電話番号','電話','tel','ｔｅｌ','telephone','連絡先','電話番号1','電話番号2','代表電話'],
@@ -526,7 +556,7 @@
   }
   function parseRowWithHeader(line,headerMap){
     const cells=line.split('\t').map(s=>s.trim());
-    const fields={priority:'',no:'',corporation:'',facility:'',address:'',phone:'',person:'',mail:'',rep:''};
+    const fields={priority:'',no:'',corporation:'',facility:'',address:'',phone:'',person:'',mail:'',rep:'',dept_unit:''};
     const callRounds=[]; let cur=null;
     cells.forEach((cell,i)=>{ const type=headerMap[i]; if(!type)return;
       if(type==='call_date'){if(cur)callRounds.push(cur);cur=cell?{date:cell}:{};}
@@ -536,6 +566,7 @@
       else if(type==='phone'){if(cell&&!fields.phone)fields.phone=normalizePhone(cell);}
       else if(type==='mail'){if(cell&&!fields.mail)fields.mail=normalizeMail(cell);}
       else if(type==='rep'){if(cell&&!fields.rep)fields.rep=normalizePerson(cell);}
+      else if(type==='dept_unit'){if(cell&&!fields.dept_unit)fields.dept_unit=cell.trim();}
       else if(type==='dept'||type==='site'||type==='person'){/* 報告には出さない：診療科目/サイトURL/自社架電担当 */}
       else if(fields[type]!==undefined&&cell&&!fields[type]){fields[type]=cell;}
     });
@@ -549,7 +580,7 @@
     let fdi=-1; for(let i=0;i<cells.length;i++){if(isDateCell(cells[i])){fdi=i;break;}}
     const baseCells=fdi>=0?cells.slice(0,fdi):cells.slice();
     const tailCells=fdi>=0?cells.slice(fdi):[];
-    const fields={priority:'',no:'',corporation:'',facility:'',address:'',phone:'',person:'',mail:'',rep:''};
+    const fields={priority:'',no:'',corporation:'',facility:'',address:'',phone:'',person:'',mail:'',rep:'',dept_unit:''};
     const pc=[];
     baseCells.forEach(c=>{ if(!c)return;
       if(RE.mailLoose.test(c)){if(!fields.mail)fields.mail=normalizeMail(c);return;}
@@ -580,7 +611,7 @@
     const allText=allComments.join('\n');
 
     const cfg=MODE_CONFIG[MODE];
-    const wantDoc = cfg.kind==='report' ? cfg.priorityResult==='doc' : (cfg.mailType==='doc');
+    const wantDoc = cfg.kind==='report' ? cfg.priorityResult==='doc' : (currentMailType==='doc');
     let priorityCall;
     if(wantDoc){ priorityCall=[...uc].reverse().find(c=>RE.docResult.test(c.result||'')||RE.docResult.test(c.comment||'')); }
     else { priorityCall=[...uc].reverse().find(c=>RE.apoResult.test(c.result||'')); }
@@ -635,7 +666,7 @@
     } else {
       if(!fields.mail)warnings.push('メールアドレスなし');
     }
-    return { schedule:scheduleStr, facility:facilityCombined, address:fields.address||'', person:finalPerson, phone:finalPhone, mail:fields.mail||'', note:noteStr, warnings };
+    return { schedule:scheduleStr, facility:facilityCombined, address:fields.address||'', person:finalPerson, phone:finalPhone, mail:fields.mail||'', note:noteStr, dept:fields.dept_unit||'', warnings };
   }
   // ===== レンダリング =====
   let records=[];
@@ -663,12 +694,26 @@
 
   // 差し込み値を集める（ロック値＝署名・サービスURLは登録値を採用）
   function buildVars(r){
-    const cfg=MODE_CONFIG[MODE], sig=activeSig();
-    const person=(r.person&&r.person.trim())?r.person.trim():'ご担当者';
+    const sig=activeSig();
+    // 宛名3行：会社名（施設名）／事業部（あれば）／氏名様
+    const company=(r.facility&&r.facility.trim())?r.facility.trim():TODO;
+    const dept=((r.dept||'').trim()) || ($('m-dept')?$('m-dept').value.trim():'');
+    let personLine;
+    if(r.person&&r.person.trim()){
+      const p=r.person.trim();
+      personLine = /(様|さん|御中|殿)\s*$/.test(p) ? p : (p+' 様');
+    } else {
+      personLine='ご担当者様';
+    }
+    const addrLines=[company];
+    if(dept)addrLines.push(dept);
+    addrLines.push(personLine);
+    const addressBlock=addrLines.join('\n');
+
     const intro=(sig.intro||'').trim();
     const block=(sig.block||'').trim();
     let svcName, svcUrl, content='', link='', dt='', docs='', next='';
-    if(cfg.mailType==='meeting'){
+    if(currentMailType==='meeting'){
       svcName=$('m-service-name').value.trim(); svcUrl=$('m-service-url').value.trim();
       content=$('m-content').value.trim(); link=$('m-link').value.trim(); dt=$('m-datetime').value.trim();
     } else {
@@ -677,7 +722,10 @@
       next=$('d-nextstep').value.trim()||'お電話にてご状況を伺えればと存じます。';
     }
     return {
-      '{宛名}': person,
+      '{宛名}': addressBlock,
+      '{会社名}': company,
+      '{事業部}': dept,
+      '{氏名様}': personLine,
       '{名乗り}': intro,
       '{署名}': block,
       '{サービス名}': svcName||TODO,
@@ -714,6 +762,7 @@
     const warnHtml=r.warnings&&r.warnings.length?r.warnings.map(w=>`<span class="warn" data-warn="${escapeHtml(w)}">⚠ ${escapeHtml(w)}</span>`).join(' '):'';
     const idxLabel=records.length>1?`<span class="result-index">#${i+1}</span>`:'';
     const hasWarn=r.warnings&&r.warnings.length?' has-warn':'';
+    const typeTag=isMail?`<span class="custom-flag">${escapeHtml(MAILTYPE_LABEL[currentMailType]||currentMailType)}</span>`:'';
     const statusTag=isMail?`<span class="custom-flag" style="background:#e6f1ec;color:#0f6e56;border-color:#bfe0d2;">${escapeHtml(STATUS_LABEL[currentStatus]||currentStatus)}</span>`:'';
     const customTag=(isMail&&mail.custom)?`<span class="custom-flag">個人カスタム</span>`:'';
     const subjectHtml=isMail?`<div class="subject-line"><span class="subj-key">件名：</span>${escapeHtml(mail.subject)}</div>`:'';
@@ -732,7 +781,7 @@
     return `
       <div class="result-card${hasWarn}" data-idx="${i}">
         <div class="result-head">
-          <div class="result-title">${idxLabel}<span>出力結果</span>${statusTag}${customTag} ${warnHtml}</div>
+          <div class="result-title">${idxLabel}<span>出力結果</span>${typeTag}${statusTag}${customTag} ${warnHtml}</div>
           <div class="result-actions">
             <button class="card-copy primary">📋 コピー</button>
             <button class="card-edit">✎ 修正</button>
@@ -785,7 +834,7 @@
     if(records.length>0){const f=results.querySelector('.result-card');if(f)f.scrollIntoView({behavior:'smooth',block:'start'});}
   }
 
-  ['m-datetime','m-link','m-content','m-service-name','m-service-url','d-docs','d-service-name','d-service-url','d-nextstep'].forEach(id=>{const el=$(id); if(el)el.addEventListener('input',()=>{if(records.length)renderAll();});});
+  ['m-dept','m-datetime','m-link','m-content','m-service-name','m-service-url','d-docs','d-service-name','d-service-url','d-nextstep'].forEach(id=>{const el=$(id); if(el)el.addEventListener('input',()=>{if(records.length)renderAll();});});
 
   parseBtn.addEventListener('click',doParse);
   input.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();doParse();}if(e.key==='Escape'){input.value='';records=[];renderAll();autoResize();}});
@@ -799,7 +848,8 @@
     mail_meeting:'\t\t株式会社サンプル\tサンプル本店\t000-0000-0000\tサンプル 太郎 様\t6/2\t14:00\tアポ獲得\t6/4 16時に訪問希望、sample@example.com\t',
     mail_doc:'\t\t株式会社サンプル\tサンプル本店\t000-0000-0000\tサンプル 太郎 様\t6/2\t14:00\t資料請求\t資料メール希望 sample@example.com\t'
   };
-  sampleBtn.addEventListener('click',()=>{input.value=SAMPLES[MODE]||SAMPLES.apo;autoResize();doParse();});
+  function sampleKey(){ if(MODE==='mail')return currentMailType==='doc'?'mail_doc':'mail_meeting'; return MODE; }
+  sampleBtn.addEventListener('click',()=>{input.value=SAMPLES[sampleKey()]||SAMPLES.apo;autoResize();doParse();});
   clearBtn.addEventListener('click',()=>{input.value='';records=[];renderAll();autoResize();input.focus();});
 
   // ===== モード切替 =====
@@ -813,7 +863,7 @@
     $('mail-fields').classList.toggle('hidden',!isMail);
     $('help-report').classList.toggle('hidden',isMail);
     $('help-mail').classList.toggle('hidden',!isMail);
-    if(isMail){ $('mail-meeting-fields').classList.toggle('hidden',cfg.mailType!=='meeting'); $('mail-doc-fields').classList.toggle('hidden',cfg.mailType!=='doc'); renderCaseSelect(); if(selectedCaseIdx>=0)applyCaseToFields(selectedCaseIdx); renderStatusChips(); if(tplPanel.style.display!=='none')renderTplEditor(); }
+    if(isMail){ $('mail-meeting-fields').classList.toggle('hidden',currentMailType!=='meeting'); $('mail-doc-fields').classList.toggle('hidden',currentMailType!=='doc'); renderCaseSelect(); if(selectedCaseIdx>=0)applyCaseToFields(selectedCaseIdx); renderMailTypeChips(); renderStatusChips(); if(tplPanel.style.display!=='none')renderTplEditor(); }
     if(input.value.trim())doParse(); else renderAll();
   }
   document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>applyMode(t.dataset.mode)));
