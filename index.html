@@ -117,6 +117,27 @@
   .ph-help { font-size: 11px; color: #5f5e5a; margin-top: 6px; line-height: 1.6; }
   .ph-help code { background: #f0eee4; padding: 1px 5px; border-radius: 3px; font-size: 11px; }
   .custom-flag { display: inline-block; padding: 1px 7px; background: #eef3f8; color: #185fa5; border: 1px solid #d4e0ec; border-radius: 6px; font-size: 10px; font-weight: 600; margin-left: 4px; }
+  /* 連携設定（GAS/Slack） */
+  .conn-panel { margin-top: 12px; padding: 14px; background: #f0f4f8; border: 1px solid #cdd9e6; border-radius: 8px; }
+  .conn-panel .project-help { color: #3a5a7a; }
+  .conn-row { display: grid; grid-template-columns: 120px 1fr; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .conn-row label { font-size: 12px; color: #3a5a7a; font-weight: 500; }
+  .conn-row input { padding: 7px 10px; border: 1px solid #c0cdda; border-radius: 5px; font-size: 12px; font-family: "SF Mono", Consolas, monospace; }
+  .conn-status { font-size: 11px; margin-left: 4px; }
+  .wh-item { display: grid; grid-template-columns: 110px 1fr auto; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .wh-item input { padding: 6px 10px; border: 1px solid #c0cdda; border-radius: 5px; font-size: 12px; font-family: "SF Mono", Consolas, monospace; }
+  .wh-item .wh-remove { padding: 4px 10px; font-size: 12px; color: #a55b5b; border-color: transparent; }
+  /* AIボタン・Slack送信UI */
+  .card-ai { background: #fff; border-color: #c9b8e0; color: #6a4ca5; }
+  .card-ai:hover { background: #f4eefb; }
+  .ai-msg-row { margin: 8px 0; padding: 8px 10px; background: #f7f3fc; border: 1px solid #ddd0ee; border-radius: 6px; }
+  .ai-msg-row label { font-size: 11px; color: #6a4ca5; font-weight: 600; display: block; margin-bottom: 4px; }
+  .ai-msg-row textarea { width: 100%; min-height: 56px; padding: 6px 10px; border: 1px solid #ddd0ee; border-radius: 5px; font-size: 12px; font-family: inherit; resize: vertical; }
+  .ai-hint { font-size: 10px; color: #8a7aa5; margin-top: 3px; }
+  .slack-bar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 10px; padding: 10px 12px; background: #faf9f4; border: 1px solid #ece9de; border-radius: 8px; }
+  .slack-bar select, .slack-bar input { padding: 6px 10px; border: 1px solid #d3d1c7; border-radius: 5px; font-size: 12px; font-family: inherit; }
+  .slack-bar .slack-msg { flex: 1; min-width: 200px; }
+  @media (max-width: 600px) { .conn-row { grid-template-columns: 1fr; } .wh-item { grid-template-columns: 1fr; } }
   @media (max-width: 600px) { body { padding: 12px; } .panel, header, .help { padding: 16px; } .field-row { grid-template-columns: 80px 1fr; } .copy-all { margin-left: 0; width: 100%; } }
 </style>
 </head>
@@ -194,6 +215,7 @@
       </label>
       <span class="admin-badge">編集中：会社標準ひな形を変更できます</span>
       <button id="tpl-edit-btn" class="ghost admin-only inline">ひな形を編集</button>
+      <button id="conn-edit-btn" class="ghost admin-only inline">連携設定</button>
       <span style="font-size:11px;color:#888780;">※ 一般メンバーは選ぶだけ。ひな形編集は管理者モードのみ</span>
     </div>
 
@@ -212,8 +234,26 @@
         使える差し込みタグ：
         <code>{宛名}</code>（会社名／事業部／氏名様の3行を自動展開） <code>{会社名}</code> <code>{事業部}</code> <code>{氏名様}</code>
         <code>{名乗り}</code> <code>{署名}</code> <code>{サービス名}</code> <code>{サービスURL}</code>
-        <code>{日時}</code> <code>{リンク}</code> <code>{面談内容}</code> <code>{送付資料}</code> <code>{次回連絡}</code> <code>{施設名}</code>
+        <code>{日時}</code> <code>{リンク}</code> <code>{面談内容}</code> <code>{送付資料}</code> <code>{次回連絡}</code> <code>{施設名}</code> <code>{個別メッセージ}</code>
         <div class="lock-note">🔒 <code>{署名}</code><code>{サービスURL}</code> は差し込み専用です。本文に直書きせずタグのままにすると、登録済みの正しい値が自動で入り、事故を防げます。<br>※ <code>{宛名}</code> は事業部が空のとき自動でその行を省きます。会社名・氏名様を個別に配置したい場合は <code>{会社名}</code> <code>{氏名様}</code> を使ってください。</div>
+      </div>
+    </div>
+    <!-- 連携設定（GAS / Slack）：管理者のみ -->
+    <div class="conn-panel mode-mail admin-only" id="conn-panel" style="display:none;">
+      <div class="project-help">
+        <b>外部連携の設定（管理者）</b>　AI個別文の生成とSlack送信に使うGASの接続先を登録します。APIキー等はGAS側に隠れるため、ここにはGASのURLとSlackの送信先ラベルのみを保存します（ブラウザ内のみ）。
+      </div>
+      <div class="conn-row">
+        <label>GAS URL</label>
+        <input id="gas-url" placeholder="https://script.google.com/macros/s/●●●/exec"/>
+      </div>
+      <div style="font-size:12px;color:#3a5a7a;font-weight:600;margin:10px 0 4px;">Slack送信先（CHごとに登録）</div>
+      <div class="project-help">「キー」はGASのスクリプトプロパティ <code>SLACK_WEBHOOK_◯◯</code> の ◯◯ 部分（例：<code>bug</code> / <code>progress</code> / <code>idea</code>）。「表示名」は送信時の選択肢に出る名前です。</div>
+      <div id="wh-list"></div>
+      <button id="wh-add" class="ghost">+ 送信先を追加</button>
+      <div class="conn-row" style="margin-top:10px;">
+        <label>疎通テスト</label>
+        <div><button id="gas-test" class="ghost" style="border:1px solid #c0cdda;">GAS接続を確認</button><span class="conn-status" id="gas-test-status"></span></div>
       </div>
     </div>
   </header>
@@ -310,7 +350,7 @@
   let currentStatus = 'visit';
 
   // ===== 会社標準ひな形（第1層）の初期値＝叩き台 =====
-  const DEFAULT_TEMPLATES = {"meeting": {"visit": {"label": "訪問希望", "subject": "【{サービス名}】ご訪問の日程に関するご案内", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\nお打ち合わせにつきまして、下記の通りご案内申し上げます。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【ご訪問の詳細】\n日時：{日時}\n内容：{面談内容}\n※当日は貴社までお伺いいたします。\n\nご多用のところ恐れ入りますが、当日は何卒よろしくお願いいたします。\nご不明点等ございましたら、お気軽にご連絡くださいませ。\n\n{署名}"}, "online": {"label": "オンライン希望", "subject": "【{サービス名}】オンライン面談のご案内（{日時}）", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\nオンラインでのお打ち合わせにつきまして、下記の通りご案内申し上げます。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【ご面談の詳細】\n日時：{日時}\n内容：{面談内容}\nミーティングURL：{リンク}\n※お時間になりましたら上記URLよりご入室ください。\n\nご多用のところ恐れ入りますが、当日は何卒よろしくお願いいたします。\n\n{署名}"}, "internal": {"label": "社内展開希望", "subject": "【{サービス名}】社内ご検討用 資料のご送付", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\n社内でご共有いただける旨、承知いたしました。ご検討の一助となりますよう、概要を下記にまとめております。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【ご面談の詳細】\n日時：{日時}\n内容：{面談内容}\n\n社内ご展開の際にご不明な点や、追加でご入用の資料がございましたら、遠慮なくお申し付けください。\nご検討のほど、何卒よろしくお願いいたします。\n\n{署名}"}, "followup": {"label": "フォロー確約", "subject": "【{サービス名}】本日のお電話のお礼と次回のご連絡について", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\nお伝えしましたサービスの概要を、改めて下記にご案内申し上げます。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【お打ち合わせ（予定）】\n日時：{日時}\n内容：{面談内容}\n\n次回、{日時}に改めてお電話にてご連絡を差し上げます。\nそれまでにご不明点等ございましたら、本メールへご返信くださいませ。\n引き続き何卒よろしくお願いいたします。\n\n{署名}"}, "other": {"label": "その他", "subject": "【{サービス名}】お打ち合わせに関するご案内", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【ご面談の詳細】\n日時：{日時}\n内容：{面談内容}\nリンク：{リンク}\n\n何卒よろしくお願いいたします。\n\n{署名}"}}, "doc": {"visit": {"label": "訪問希望", "subject": "【{サービス名}】資料ご送付と次回ご訪問について", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\nご依頼いただきました資料をお送りいたします。あわせて、ご訪問の機会をいただけますと幸いです。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\nご一読のうえ、改めてご訪問にてご説明の機会を頂戴できればと存じます。\n何卒よろしくお願いいたします。\n\n{署名}"}, "online": {"label": "オンライン希望", "subject": "【{サービス名}】資料ご送付とオンライン面談のご相談", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\nご依頼いただきました資料をお送りいたします。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\nご一読のうえ、ご不明点等ございましたら、オンラインにて簡単にご説明の機会を頂戴できればと存じます。\n何卒よろしくお願いいたします。\n\n{署名}"}, "internal": {"label": "社内展開希望", "subject": "【{サービス名}】社内ご検討用 資料のご送付", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\n社内でご共有いただける旨、承知いたしました。ご検討用に資料をお送りいたします。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\n社内ご展開の際に、追加でご入用の資料やご不明点がございましたら、お気軽にお申し付けください。\nご検討のほど、何卒よろしくお願いいたします。\n\n{署名}"}, "followup": {"label": "フォロー確約", "subject": "【{サービス名}】資料ご送付と次回のご連絡について", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\nご依頼いただきました資料をお送りいたします。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\n改めて{次回連絡}\n何卒よろしくお願いいたします。\n\n{署名}"}, "other": {"label": "その他", "subject": "【{サービス名}】資料ご送付のご案内", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\nご依頼いただきました資料をお送りいたします。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\nご不明な点がございましたら、お気軽にお問い合わせください。\n{次回連絡}\n何卒よろしくお願いいたします。\n\n{署名}"}}};
+  const DEFAULT_TEMPLATES = {"meeting": {"visit": {"label": "訪問希望", "subject": "【{サービス名}】ご訪問の日程に関するご案内", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\n{個別メッセージ}\nお打ち合わせにつきまして、下記の通りご案内申し上げます。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【ご訪問の詳細】\n日時：{日時}\n内容：{面談内容}\n※当日は貴社までお伺いいたします。\n\nご多用のところ恐れ入りますが、当日は何卒よろしくお願いいたします。\nご不明点等ございましたら、お気軽にご連絡くださいませ。\n\n{署名}"}, "online": {"label": "オンライン希望", "subject": "【{サービス名}】オンライン面談のご案内（{日時}）", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\n{個別メッセージ}\nオンラインでのお打ち合わせにつきまして、下記の通りご案内申し上げます。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【ご面談の詳細】\n日時：{日時}\n内容：{面談内容}\nミーティングURL：{リンク}\n※お時間になりましたら上記URLよりご入室ください。\n\nご多用のところ恐れ入りますが、当日は何卒よろしくお願いいたします。\n\n{署名}"}, "internal": {"label": "社内展開希望", "subject": "【{サービス名}】社内ご検討用 資料のご送付", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\n{個別メッセージ}\n社内でご共有いただける旨、承知いたしました。ご検討の一助となりますよう、概要を下記にまとめております。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【ご面談の詳細】\n日時：{日時}\n内容：{面談内容}\n\n社内ご展開の際にご不明な点や、追加でご入用の資料がございましたら、遠慮なくお申し付けください。\nご検討のほど、何卒よろしくお願いいたします。\n\n{署名}"}, "followup": {"label": "フォロー確約", "subject": "【{サービス名}】本日のお電話のお礼と次回のご連絡について", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\n{個別メッセージ}\nお伝えしましたサービスの概要を、改めて下記にご案内申し上げます。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【お打ち合わせ（予定）】\n日時：{日時}\n内容：{面談内容}\n\n次回、{日時}に改めてお電話にてご連絡を差し上げます。\nそれまでにご不明点等ございましたら、本メールへご返信くださいませ。\n引き続き何卒よろしくお願いいたします。\n\n{署名}"}, "other": {"label": "その他", "subject": "【{サービス名}】お打ち合わせに関するご案内", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\n{個別メッセージ}\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【ご面談の詳細】\n日時：{日時}\n内容：{面談内容}\nリンク：{リンク}\n\n何卒よろしくお願いいたします。\n\n{署名}"}}, "doc": {"visit": {"label": "訪問希望", "subject": "【{サービス名}】資料ご送付と次回ご訪問について", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\n{個別メッセージ}\nご依頼いただきました資料をお送りいたします。あわせて、ご訪問の機会をいただけますと幸いです。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\nご一読のうえ、改めてご訪問にてご説明の機会を頂戴できればと存じます。\n何卒よろしくお願いいたします。\n\n{署名}"}, "online": {"label": "オンライン希望", "subject": "【{サービス名}】資料ご送付とオンライン面談のご相談", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\n{個別メッセージ}\nご依頼いただきました資料をお送りいたします。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\nご一読のうえ、ご不明点等ございましたら、オンラインにて簡単にご説明の機会を頂戴できればと存じます。\n何卒よろしくお願いいたします。\n\n{署名}"}, "internal": {"label": "社内展開希望", "subject": "【{サービス名}】社内ご検討用 資料のご送付", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\n{個別メッセージ}\n社内でご共有いただける旨、承知いたしました。ご検討用に資料をお送りいたします。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\n社内ご展開の際に、追加でご入用の資料やご不明点がございましたら、お気軽にお申し付けください。\nご検討のほど、何卒よろしくお願いいたします。\n\n{署名}"}, "followup": {"label": "フォロー確約", "subject": "【{サービス名}】資料ご送付と次回のご連絡について", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\n{個別メッセージ}\nご依頼いただきました資料をお送りいたします。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\n改めて{次回連絡}\n何卒よろしくお願いいたします。\n\n{署名}"}, "other": {"label": "その他", "subject": "【{サービス名}】資料ご送付のご案内", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\n{個別メッセージ}\nご依頼いただきました資料をお送りいたします。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\nご不明な点がございましたら、お気軽にお問い合わせください。\n{次回連絡}\n何卒よろしくお願いいたします。\n\n{署名}"}}};
 
   // ===== モード定義 =====
   const MODE_CONFIG = {
@@ -405,18 +445,72 @@
   sigEditBtn.addEventListener('click',()=>{const o=sigPanel.style.display!=='none'; sigPanel.style.display=o?'none':'block'; sigEditBtn.textContent=o?'編集':'閉じる';});
   sigAddBtn.addEventListener('click',()=>{signatures.push({name:'',intro:'株式会社○○の△△と申します。',block:DEFAULT_SIG_BLOCK});saveSignatures();renderSigList();renderSigSelect();});
   function activeSig(){ return signatures[selectedSigIdx]||signatures[0]; }
+
+  // ===== 連携設定（GAS URL / Slack Webhook送信先） =====
+  const GAS_URL_KEY='alphadrive_gas_url', WEBHOOKS_KEY='alphadrive_webhooks';
+  let gasUrl='', webhooks=[];
+  function loadConn(){
+    try{ gasUrl=localStorage.getItem(GAS_URL_KEY)||''; }catch(e){}
+    try{ const w=localStorage.getItem(WEBHOOKS_KEY); if(w){const p=JSON.parse(w); if(Array.isArray(p))webhooks=p;} }catch(e){}
+    if(!webhooks.length){ webhooks=[ {key:'bug',label:'バグ報告CH'}, {key:'progress',label:'進捗・アポ報告CH'}, {key:'idea',label:'機能アイデアCH'} ]; }
+  }
+  function saveConn(){ try{ localStorage.setItem(GAS_URL_KEY,gasUrl); localStorage.setItem(WEBHOOKS_KEY,JSON.stringify(webhooks)); }catch(e){} }
+  loadConn();
+  const gasUrlInput=$('gas-url'), connEditBtn=$('conn-edit-btn'), connPanel=$('conn-panel'), whList=$('wh-list'), whAdd=$('wh-add'), gasTest=$('gas-test'), gasTestStatus=$('gas-test-status');
+  if(gasUrlInput)gasUrlInput.value=gasUrl;
+  function renderWhList(){
+    if(!whList)return;
+    whList.innerHTML=webhooks.map((w,i)=>`<div class="wh-item" data-idx="${i}"><input class="wh-key" value="${escapeHtml(w.key||'')}" placeholder="キー（例：bug）"/><input class="wh-label" value="${escapeHtml(w.label||'')}" placeholder="表示名（例：バグ報告CH）"/><button class="wh-remove" type="button">削除</button></div>`).join('');
+    whList.querySelectorAll('.wh-item').forEach(item=>{ const idx=+item.dataset.idx,k=item.querySelector('.wh-key'),l=item.querySelector('.wh-label'); const upd=(()=>{let t;return()=>{clearTimeout(t);t=setTimeout(()=>{webhooks[idx].key=k.value.trim();webhooks[idx].label=l.value.trim();saveConn();renderAll();},300);};})(); k.addEventListener('input',upd); l.addEventListener('input',upd); item.querySelector('.wh-remove').addEventListener('click',()=>{webhooks.splice(idx,1);saveConn();renderWhList();renderAll();}); });
+  }
+  renderWhList();
+  if(gasUrlInput)gasUrlInput.addEventListener('input',()=>{ gasUrl=gasUrlInput.value.trim(); saveConn(); });
+  if(connEditBtn)connEditBtn.addEventListener('click',()=>{const o=connPanel.style.display!=='none'; connPanel.style.display=o?'none':'block'; connEditBtn.textContent=o?'連携設定':'閉じる';});
+  if(whAdd)whAdd.addEventListener('click',()=>{webhooks.push({key:'',label:''});saveConn();renderWhList();const it=whList.querySelectorAll('.wh-item');const last=it[it.length-1];if(last)last.querySelector('.wh-key').focus();});
+
+  // GAS呼び出し（CORSプリフライト回避のため text/plain でPOST）
+  async function callGas(payload){
+    if(!gasUrl)throw new Error('GAS URLが未設定です（管理者→連携設定で登録）');
+    const res=await fetch(gasUrl,{ method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(payload) });
+    const txt=await res.text();
+    let data; try{ data=JSON.parse(txt); }catch(e){ throw new Error('GAS応答が不正：'+txt.slice(0,200)); }
+    if(!data.ok)throw new Error(data.error||'GASエラー');
+    return data;
+  }
+  if(gasTest)gasTest.addEventListener('click',async()=>{
+    gasTestStatus.textContent='確認中…'; gasTestStatus.style.color='#5f5e5a';
+    try{ await callGas({action:'slack',webhookKey:'__noop__',message:'__noop__'}); gasTestStatus.textContent='✓ 接続OK'; gasTestStatus.style.color='#0f6e56'; }
+    catch(e){ // __noop__ は送信先未設定エラーになるが、URL自体が通れば「応答あり」とみなす
+      const m=String(e.message||'');
+      if(/未設定です|webhookKey|SLACK_WEBHOOK/.test(m)){ gasTestStatus.textContent='✓ GASへの接続は成功（送信先キーは要設定）'; gasTestStatus.style.color='#0f6e56'; }
+      else { gasTestStatus.textContent='✗ '+m; gasTestStatus.style.color='#a55b5b'; }
+    }
+  });
   // ===== テンプレート管理（3層：会社標準 / 個人カスタム / その場編集） =====
-  const TPL_COMPANY_KEY='alphadrive_tpl_company', TPL_PERSONAL_KEY='alphadrive_tpl_personal', ADMIN_KEY='alphadrive_admin_mode';
+  // 会社標準のバージョン。DEFAULT_TEMPLATESを更新したらこの数字を上げると、
+  // 各利用者のブラウザが次回読み込み時に新しい会社標準を自動で取り込みます（個人カスタムは保持）。
+  const COMPANY_TPL_VERSION = 2;
+  const TPL_COMPANY_KEY='alphadrive_tpl_company', TPL_PERSONAL_KEY='alphadrive_tpl_personal', ADMIN_KEY='alphadrive_admin_mode', TPL_VER_KEY='alphadrive_tpl_company_version';
   let companyTpl={}, personalTpl={}, adminMode=false;
   function deepClone(o){ return JSON.parse(JSON.stringify(o)); }
   function loadTemplates(){
-    try{ const c=localStorage.getItem(TPL_COMPANY_KEY); companyTpl=c?JSON.parse(c):deepClone(DEFAULT_TEMPLATES); }catch(e){ companyTpl=deepClone(DEFAULT_TEMPLATES); }
+    let savedVer=0;
+    try{ savedVer=parseInt(localStorage.getItem(TPL_VER_KEY)||'0',10)||0; }catch(e){}
+    let saved=null;
+    try{ const c=localStorage.getItem(TPL_COMPANY_KEY); if(c)saved=JSON.parse(c); }catch(e){}
+    // 保存が無い、またはHTML同梱版の方が新しいときは、同梱の会社標準を採用して取り込む
+    if(!saved || savedVer<COMPANY_TPL_VERSION){
+      companyTpl=deepClone(DEFAULT_TEMPLATES);
+      try{ localStorage.setItem(TPL_COMPANY_KEY,JSON.stringify(companyTpl)); localStorage.setItem(TPL_VER_KEY,String(COMPANY_TPL_VERSION)); }catch(e){}
+    } else {
+      companyTpl=saved;
+    }
     try{ const p=localStorage.getItem(TPL_PERSONAL_KEY); personalTpl=p?JSON.parse(p):{}; }catch(e){ personalTpl={}; }
     try{ adminMode=localStorage.getItem(ADMIN_KEY)==='1'; }catch(e){}
     // 会社標準に無いステータス（将来追加分の欠損）を初期値で補完
     ['meeting','doc'].forEach(mk=>{ if(!companyTpl[mk])companyTpl[mk]={}; STATUS_ORDER.forEach(st=>{ if(!companyTpl[mk][st]&&DEFAULT_TEMPLATES[mk]&&DEFAULT_TEMPLATES[mk][st])companyTpl[mk][st]=deepClone(DEFAULT_TEMPLATES[mk][st]); }); });
   }
-  function saveCompanyTpl(){ try{ localStorage.setItem(TPL_COMPANY_KEY,JSON.stringify(companyTpl)); }catch(e){} }
+  function saveCompanyTpl(){ try{ localStorage.setItem(TPL_COMPANY_KEY,JSON.stringify(companyTpl)); localStorage.setItem(TPL_VER_KEY,String(COMPANY_TPL_VERSION)); }catch(e){} }
   function savePersonalTpl(){ try{ localStorage.setItem(TPL_PERSONAL_KEY,JSON.stringify(personalTpl)); }catch(e){} }
   loadTemplates();
 
@@ -735,12 +829,16 @@
       '{日時}': dt||TODO,
       '{送付資料}': docs,
       '{次回連絡}': next,
+      '{個別メッセージ}': (r.aiMsg||'').trim(),
       '{施設名}': r.facility||TODO
     };
   }
   function fillTemplate(str,vars){
     if(!str)return '';
-    return str.replace(/\{[^}]+\}/g,m=> (m in vars)?vars[m]:m );
+    let out=str.replace(/\{[^}]+\}/g,m=> (m in vars)?vars[m]:m );
+    // 個別メッセージが空のとき、その行だけが空になって連続改行が増えるのを防ぐ
+    out=out.replace(/\n{3,}/g,'\n\n');
+    return out.trim()+'\n';
   }
 
   // メール生成：{subject, body, custom}
@@ -783,14 +881,27 @@
         <div class="result-head">
           <div class="result-title">${idxLabel}<span>出力結果</span>${typeTag}${statusTag}${customTag} ${warnHtml}</div>
           <div class="result-actions">
+            ${isMail?'<button class="card-ai">✨ AIで個別文</button>':''}
             <button class="card-copy primary">📋 コピー</button>
             <button class="card-edit">✎ 修正</button>
             ${records.length>1?'<button class="card-remove ghost">削除</button>':''}
           </div>
         </div>
         <div class="edit-panel">${editRows}</div>
+        ${isMail?`<div class="ai-msg-row" style="${(r.aiMsg&&r.aiMsg.trim())?'':'display:none;'}">
+          <label>AIが生成した個別メッセージ（送信前に必ず内容を確認・修正してください）</label>
+          <textarea class="ai-msg-edit" placeholder="架電メモから生成された1〜2文がここに入ります">${escapeHtml(r.aiMsg||'')}</textarea>
+          <div class="ai-hint">この文は本文中の <code>{個別メッセージ}</code> の位置に差し込まれます。テンプレートに <code>{個別メッセージ}</code> が無い場合は反映されません。</div>
+        </div>`:''}
         ${subjectHtml}
         <div class="body${isMail?' with-subject':''}">${escapeHtml(reportText)}</div>
+        ${isMail?`<div class="slack-bar">
+          <span style="font-size:11px;color:#5f5e5a;">Slackへ：</span>
+          <select class="slack-kind"><option value="progress">案件進捗・アポ報告</option><option value="bug">バグ報告</option><option value="idea">機能アイデア</option></select>
+          <select class="slack-target">${webhooks.map(w=>`<option value="${escapeHtml(w.key)}">${escapeHtml(w.label||w.key)}</option>`).join('')}</select>
+          <button class="slack-send ghost" style="border:1px solid #d3d1c7;">送信</button>
+          <span class="slack-status" style="font-size:11px;"></span>
+        </div>`:''}
       </div>`;
   }
 
@@ -820,6 +931,45 @@
       const rb=card.querySelector('.card-remove'); if(rb)rb.addEventListener('click',()=>{records.splice(idx,1);renderAll();});
       card.querySelectorAll('.field-edit').forEach(inp=>inp.addEventListener('input',()=>{records[idx][inp.dataset.key]=inp.value; const cfg=MODE_CONFIG[MODE]; if(cfg.kind==='mail'){const m=renderMail(records[idx]); const sl=card.querySelector('.subject-line'); if(sl)sl.innerHTML='<span class="subj-key">件名：</span>'+escapeHtml(m.subject); card.querySelector('.body').textContent=m.body;} else {card.querySelector('.body').textContent=renderReportText(records[idx]);}}));
       card.querySelectorAll('.warn').forEach(w=>w.addEventListener('click',()=>{const p=card.querySelector('.edit-panel');p.classList.add('open');const fn=WARN_FIELD_MAP[w.dataset.warn];if(fn){const row=card.querySelector(`.field-row[data-field="${fn}"]`);const inp=row&&row.querySelector('.field-edit');if(inp){card.querySelectorAll('.field-row').forEach(r=>r.classList.remove('focused'));row.classList.add('focused');setTimeout(()=>{inp.focus();inp.select&&inp.select();},50);}}}));
+
+      // AIで個別文を生成
+      const aiBtn=card.querySelector('.card-ai');
+      if(aiBtn)aiBtn.addEventListener('click',async()=>{
+        const r=records[idx];
+        if(!gasUrl){ alert('GAS URLが未設定です。管理者モード→連携設定で登録してください。'); return; }
+        const orig=aiBtn.textContent; aiBtn.disabled=true; aiBtn.textContent='生成中…';
+        try{
+          const data=await callGas({
+            action:'generate',
+            memo: r.note||'',
+            statusLabel: STATUS_LABEL[currentStatus]||currentStatus,
+            mailType: MAILTYPE_LABEL[currentMailType]||currentMailType,
+            serviceName: (currentMailType==='meeting'?$('m-service-name').value:$('d-service-name').value).trim(),
+            company: r.facility||''
+          });
+          r.aiMsg=(data.text||'').trim();
+          renderAll();
+        }catch(e){ alert('AI生成に失敗：'+e.message); }
+        finally{ aiBtn.disabled=false; aiBtn.textContent=orig; }
+      });
+      // AI生成文の手直し
+      const aiEdit=card.querySelector('.ai-msg-edit');
+      if(aiEdit)aiEdit.addEventListener('input',()=>{ records[idx].aiMsg=aiEdit.value; const m=renderMail(records[idx]); const sl=card.querySelector('.subject-line'); if(sl)sl.innerHTML='<span class="subj-key">件名：</span>'+escapeHtml(m.subject); card.querySelector('.body').textContent=m.body; });
+
+      // Slackへ送信（メールカード）
+      const slackBtn=card.querySelector('.slack-send');
+      if(slackBtn)slackBtn.addEventListener('click',async()=>{
+        if(!gasUrl){ alert('GAS URLが未設定です。管理者モード→連携設定で登録してください。'); return; }
+        const kind=card.querySelector('.slack-kind').value;
+        const target=card.querySelector('.slack-target').value;
+        const statusEl=card.querySelector('.slack-status');
+        const msg=copyTextFor(idx);
+        const orig=slackBtn.textContent; slackBtn.disabled=true; slackBtn.textContent='送信中…';
+        statusEl.textContent='';
+        try{ await callGas({ action:'slack', webhookKey:target, kind:kind, message:msg, sender:(reporter.value||'').trim() }); statusEl.textContent='✓ 送信しました'; statusEl.style.color='#0f6e56'; }
+        catch(e){ statusEl.textContent='✗ '+e.message; statusEl.style.color='#a55b5b'; }
+        finally{ slackBtn.disabled=false; slackBtn.textContent=orig; }
+      });
     });
   }
 
