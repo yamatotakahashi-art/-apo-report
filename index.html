@@ -69,7 +69,10 @@
   .field-row.focused .field-edit { border-color: #185fa5; background: #fff; }
   .field-label { color: #5f5e5a; font-size: 12px; }
   .field-edit { padding: 6px 10px; border: 1px solid #d3d1c7; border-radius: 5px; font-size: 12px; font-family: "SF Mono", Consolas, monospace; width: 100%; }
+  .subject-line { font-family: "SF Mono", Consolas, "Courier New", monospace; font-size: 12px; color: #2c2c2a; padding: 8px 12px; background: #eef3f8; border: 1px solid #d4e0ec; border-radius: 8px 8px 0 0; margin-bottom: -1px; }
+  .subject-line .subj-key { color: #5f5e5a; font-weight: 500; }
   .body { font-family: "SF Mono", Consolas, "Courier New", monospace; font-size: 13px; white-space: pre-wrap; padding: 12px 14px; background: #f5f5f0; border-radius: 8px; line-height: 1.8; }
+  .body.with-subject { border-radius: 0 0 8px 8px; }
   .help { font-size: 12px; color: #5f5e5a; margin-top: 16px; }
   .help h3 { font-size: 13px; font-weight: 500; color: #2c2c2a; margin: 0 0 8px; }
   .help h3:not(:first-child) { margin-top: 12px; }
@@ -77,6 +80,43 @@
   .help li { margin-bottom: 3px; }
   .help code { background: #f5f5f0; padding: 1px 5px; border-radius: 3px; font-size: 11px; font-family: "SF Mono", Consolas, monospace; }
   .hidden { display: none !important; }
+  /* ステータス選択チップ */
+  .status-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid #ece9de; align-items: center; }
+  .status-row > label { font-size: 13px; color: #5f5e5a; font-weight: 500; min-width: 72px; }
+  .status-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .status-chip { padding: 6px 14px; border: 1px solid #d3d1c7; background: #faf9f4; border-radius: 20px; font-size: 13px; cursor: pointer; color: #5f5e5a; font-weight: 500; transition: all 0.15s; }
+  .status-chip:hover { background: #f0eee4; }
+  .status-chip.active { background: #0f6e56; color: #fff; border-color: #0f6e56; }
+  /* 管理者トグル */
+  .admin-bar { display: flex; align-items: center; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid #ece9de; font-size: 12px; color: #5f5e5a; flex-wrap: wrap; }
+  .admin-switch { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+  .admin-switch input { display: none; }
+  .admin-track { width: 38px; height: 20px; border-radius: 12px; background: #d3d1c7; position: relative; transition: background 0.15s; }
+  .admin-track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform 0.15s; }
+  .admin-switch input:checked + .admin-track { background: #b4612d; }
+  .admin-switch input:checked + .admin-track::after { transform: translateX(18px); }
+  .admin-badge { display: none; padding: 2px 8px; background: #fbeee0; color: #b4612d; border: 1px solid #ecc9a8; border-radius: 6px; font-size: 11px; font-weight: 600; }
+  body.admin-on .admin-badge { display: inline-block; }
+  .admin-only { display: none; }
+  body.admin-on .admin-only { display: block; }
+  .admin-only.inline { display: none; }
+  body.admin-on .admin-only.inline { display: inline-flex; }
+  /* テンプレ編集パネル */
+  .tpl-panel { margin-top: 12px; padding: 14px; background: #fbf7f0; border: 1px solid #ecdcc6; border-radius: 8px; }
+  .tpl-panel .project-help { color: #8a6a42; }
+  .tpl-block { margin-bottom: 12px; padding: 10px 12px; background: #fff; border: 1px solid #ece9de; border-radius: 6px; }
+  .tpl-block .tpl-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .tpl-block .tpl-status-name { font-size: 12px; font-weight: 600; color: #0f6e56; }
+  .tpl-block label { font-size: 11px; color: #5f5e5a; display: block; margin: 6px 0 2px; }
+  .tpl-block input, .tpl-block textarea { width: 100%; padding: 6px 10px; border: 1px solid #d3d1c7; border-radius: 5px; font-size: 12px; font-family: "SF Mono", Consolas, monospace; }
+  .tpl-block textarea { min-height: 140px; line-height: 1.6; resize: vertical; }
+  .tpl-scope { display: inline-flex; gap: 4px; }
+  .tpl-scope button { padding: 3px 10px; font-size: 11px; }
+  .tpl-scope button.active { background: #185fa5; color: #fff; border-color: #185fa5; }
+  .lock-note { font-size: 11px; color: #b4612d; margin-top: 4px; }
+  .ph-help { font-size: 11px; color: #5f5e5a; margin-top: 6px; line-height: 1.6; }
+  .ph-help code { background: #f0eee4; padding: 1px 5px; border-radius: 3px; font-size: 11px; }
+  .custom-flag { display: inline-block; padding: 1px 7px; background: #eef3f8; color: #185fa5; border: 1px solid #d4e0ec; border-radius: 6px; font-size: 10px; font-weight: 600; margin-left: 4px; }
   @media (max-width: 600px) { body { padding: 12px; } .panel, header, .help { padding: 16px; } .field-row { grid-template-columns: 80px 1fr; } .copy-all { margin-left: 0; width: 100%; } }
 </style>
 </head>
@@ -132,6 +172,43 @@
       <div class="project-help">案件ごとに「面談内容・ご案内サービス名・サービスURL」を登録すると、案件を選んだとき下の欄へ自動入力されます。Slackメンションと共通の案件リストです。</div>
       <div id="case-list"></div>
       <button id="case-add" class="ghost">+ 案件を追加</button>
+    </div>
+
+    <!-- 相手ステータス（メールモード用） -->
+    <div class="status-row mode-mail hidden" id="status-row">
+      <label>相手の状況</label>
+      <div class="status-chips" id="status-chips"></div>
+    </div>
+
+    <!-- 管理者トグル（メールモード用） -->
+    <div class="admin-bar mode-mail hidden" id="admin-bar">
+      <label class="admin-switch">
+        <input type="checkbox" id="admin-toggle">
+        <span class="admin-track"></span>
+        <span>管理者モード</span>
+      </label>
+      <span class="admin-badge">編集中：会社標準ひな形を変更できます</span>
+      <button id="tpl-edit-btn" class="ghost admin-only inline">ひな形を編集</button>
+      <span style="font-size:11px;color:#888780;">※ 一般メンバーは選ぶだけ。ひな形編集は管理者モードのみ</span>
+    </div>
+
+    <!-- テンプレ編集パネル（メールモード・管理者用） -->
+    <div class="tpl-panel mode-mail admin-only" id="tpl-panel" style="display:none;">
+      <div class="project-help">
+        現在のステータスのひな形を編集します。<b>会社標準</b>＝全員の初期値（管理者のみ編集）。<b>個人カスタム</b>＝自分だけの上書き（任意）。
+      </div>
+      <div class="tpl-scope" style="margin-bottom:10px;">
+        <button id="tpl-scope-company" class="active">会社標準を編集</button>
+        <button id="tpl-scope-personal">個人カスタムを編集</button>
+        <button id="tpl-reset" class="ghost" style="margin-left:8px;color:#a55b5b;">このステータスを標準に戻す</button>
+      </div>
+      <div id="tpl-editor"></div>
+      <div class="ph-help">
+        使える差し込みタグ：
+        <code>{宛名}</code> <code>{名乗り}</code> <code>{署名}</code> <code>{サービス名}</code> <code>{サービスURL}</code>
+        <code>{日時}</code> <code>{リンク}</code> <code>{面談内容}</code> <code>{送付資料}</code> <code>{次回連絡}</code> <code>{施設名}</code>
+        <div class="lock-note">🔒 <code>{署名}</code><code>{サービスURL}</code> は差し込み専用です。本文に直書きせずタグのままにすると、登録済みの正しい値が自動で入り、事故を防げます。</div>
+      </div>
     </div>
   </header>
 
@@ -193,10 +270,12 @@
   <div class="help hidden" id="help-mail">
     <h3>使い方（メールモード）</h3>
     <ul>
+      <li><b>相手の状況を選ぶ</b>：訪問希望・オンライン希望・社内展開希望・フォロー確約・その他から選択 → ステータスに合ったひな形でメールを生成</li>
       <li><b>スプシ貼り付け</b>：宛名（○○様）・施設名・担当者をコピペした行から自動抽出してメールに差し込みます</li>
       <li><b>差し込み項目</b>：面談日時・リンク・サービスURL等は上の入力欄で指定（行ごとに共通で入ります）</li>
       <li><b>送信者</b>：上部の「送信者」で署名を切り替え。複数メンバー分を登録できます</li>
-      <li><b>複数件</b>：複数行を貼ればまとめてメール文面を生成。各カードの「コピー」でメール本文をそのまま貼り付け</li>
+      <li><b>件名</b>：ステータスごとに件名も自動生成。カード上部に表示され、コピー時に件名＋本文がまとめて入ります</li>
+      <li><b>ひな形の管理</b>：通常は選ぶだけ。管理者モードをONにすると会社標準ひな形を編集できます。各自の言い回しは「個人カスタム」で上書き可能（任意）</li>
       <li>※ 空欄が残った箇所は <code>【要入力】</code> と表示されるので、コピー後に手直ししてください</li>
     </ul>
   </div>
@@ -213,15 +292,26 @@
   const sigList = $('signature-list'), sigAddBtn = $('signature-add');
   const caseSelect = $('case-select'), caseEditBtn = $('case-edit-btn'), casePanel = $('case-panel');
   const caseList = $('case-list'), caseAddBtn = $('case-add');
+  const statusChips = $('status-chips'), adminToggle = $('admin-toggle'), tplEditBtn = $('tpl-edit-btn'), tplPanel = $('tpl-panel'), tplEditor = $('tpl-editor');
+  const tplScopeCompany = $('tpl-scope-company'), tplScopePersonal = $('tpl-scope-personal'), tplReset = $('tpl-reset');
+
+  // ===== ステータス定義（管理者は将来増やせる前提。順序が表示順） =====
+  const STATUS_ORDER = ['visit','online','internal','followup','other'];
+  const STATUS_LABEL = { visit:'訪問希望', online:'オンライン希望', internal:'社内展開希望', followup:'フォロー確約', other:'その他' };
+  let currentStatus = 'visit';
+
+  // ===== 会社標準ひな形（第1層）の初期値＝叩き台 =====
+  const DEFAULT_TEMPLATES = {"meeting": {"visit": {"label": "訪問希望", "subject": "【{サービス名}】ご訪問の日程に関するご案内", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\nお打ち合わせにつきまして、下記の通りご案内申し上げます。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【ご訪問の詳細】\n日時：{日時}\n内容：{面談内容}\n※当日は貴社までお伺いいたします。\n\nご多用のところ恐れ入りますが、当日は何卒よろしくお願いいたします。\nご不明点等ございましたら、お気軽にご連絡くださいませ。\n\n{署名}"}, "online": {"label": "オンライン希望", "subject": "【{サービス名}】オンライン面談のご案内（{日時}）", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\nオンラインでのお打ち合わせにつきまして、下記の通りご案内申し上げます。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【ご面談の詳細】\n日時：{日時}\n内容：{面談内容}\nミーティングURL：{リンク}\n※お時間になりましたら上記URLよりご入室ください。\n\nご多用のところ恐れ入りますが、当日は何卒よろしくお願いいたします。\n\n{署名}"}, "internal": {"label": "社内展開希望", "subject": "【{サービス名}】社内ご検討用 資料のご送付", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\n社内でご共有いただける旨、承知いたしました。ご検討の一助となりますよう、概要を下記にまとめております。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【ご面談の詳細】\n日時：{日時}\n内容：{面談内容}\n\n社内ご展開の際にご不明な点や、追加でご入用の資料がございましたら、遠慮なくお申し付けください。\nご検討のほど、何卒よろしくお願いいたします。\n\n{署名}"}, "followup": {"label": "フォローコール確約済み", "subject": "【{サービス名}】本日のお電話のお礼と次回のご連絡について", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\nお伝えしましたサービスの概要を、改めて下記にご案内申し上げます。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【お打ち合わせ（予定）】\n日時：{日時}\n内容：{面談内容}\n\n次回、{日時}に改めてお電話にてご連絡を差し上げます。\nそれまでにご不明点等ございましたら、本メールへご返信くださいませ。\n引き続き何卒よろしくお願いいたします。\n\n{署名}"}, "other": {"label": "その他", "subject": "【{サービス名}】お打ち合わせに関するご案内", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話にてお時間をいただき、誠にありがとうございました。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【ご面談の詳細】\n日時：{日時}\n内容：{面談内容}\nリンク：{リンク}\n\n何卒よろしくお願いいたします。\n\n{署名}"}}, "doc": {"visit": {"label": "訪問希望", "subject": "【{サービス名}】資料ご送付と次回ご訪問について", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\nご依頼いただきました資料をお送りいたします。あわせて、ご訪問の機会をいただけますと幸いです。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\nご一読のうえ、改めてご訪問にてご説明の機会を頂戴できればと存じます。\n何卒よろしくお願いいたします。\n\n{署名}"}, "online": {"label": "オンライン希望", "subject": "【{サービス名}】資料ご送付とオンライン面談のご相談", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\nご依頼いただきました資料をお送りいたします。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\nご一読のうえ、ご不明点等ございましたら、オンラインにて簡単にご説明の機会を頂戴できればと存じます。\n何卒よろしくお願いいたします。\n\n{署名}"}, "internal": {"label": "社内展開希望", "subject": "【{サービス名}】社内ご検討用 資料のご送付", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\n社内でご共有いただける旨、承知いたしました。ご検討用に資料をお送りいたします。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\n社内ご展開の際に、追加でご入用の資料やご不明点がございましたら、お気軽にお申し付けください。\nご検討のほど、何卒よろしくお願いいたします。\n\n{署名}"}, "followup": {"label": "フォローコール確約済み", "subject": "【{サービス名}】資料ご送付と次回のご連絡について", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\nご依頼いただきました資料をお送りいたします。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\n改めて{次回連絡}\n何卒よろしくお願いいたします。\n\n{署名}"}, "other": {"label": "その他", "subject": "【{サービス名}】資料ご送付のご案内", "body": "{宛名}\nお世話になっております。\n{名乗り}\n本日はお電話でのご対応、誠にありがとうございました。\nご依頼いただきました資料をお送りいたします。\n\n【ご案内サービス】\n{サービス名}\n{サービスURL}\n\n【送付資料】\n{送付資料}\n\nご不明な点がございましたら、お気軽にお問い合わせください。\n{次回連絡}\n何卒よろしくお願いいたします。\n\n{署名}"}}};
 
   // ===== モード定義 =====
   const MODE_CONFIG = {
     apo:  { kind:'report', title:'アポ獲得報告ジェネレーター', sub:'スプレッドシートからコピペ → Slack貼り付け用に整形（1件でも複数件でもOK）', heading:'【アポ獲得報告】', priorityResult:'apo' },
     doc:  { kind:'report', title:'資料請求報告ジェネレーター', sub:'スプレッドシートからコピペ → Slack貼り付け用に整形（1件でも複数件でもOK）', heading:'【資料請求報告】', priorityResult:'doc' },
-    mail_meeting: { kind:'mail', title:'面談案内メールジェネレーター', sub:'スプシをコピペ → 宛名を差し込んだ面談案内メールを生成', mailType:'meeting' },
-    mail_doc:     { kind:'mail', title:'資料送付メールジェネレーター', sub:'スプシをコピペ → 宛名を差し込んだ資料送付メールを生成', mailType:'doc' }
+    mail_meeting: { kind:'mail', title:'面談案内メールジェネレーター', sub:'相手の状況を選ぶ → 宛名を差し込んだ面談案内メールを生成', mailType:'meeting' },
+    mail_doc:     { kind:'mail', title:'資料送付メールジェネレーター', sub:'相手の状況を選ぶ → 宛名を差し込んだ資料送付メールを生成', mailType:'doc' }
   };
   let MODE = 'apo';
+  function mailKey(){ return MODE_CONFIG[MODE].mailType==='doc' ? 'doc' : 'meeting'; }
 
   // ===== localStorage（報告者・プロジェクト・署名） =====
   const STORAGE_KEY = 'alphadrive_reporter_name';
@@ -239,8 +329,6 @@
     projectList.querySelectorAll('.project-item').forEach(item=>{ const idx=+item.dataset.idx,n=item.querySelector('.project-name'),m=item.querySelector('.project-mentions'); const upd=(()=>{let t;return()=>{clearTimeout(t);t=setTimeout(()=>{projects[idx].name=n.value;projects[idx].mentions=m.value;saveProjects();renderProjectSelect();renderAll();},300);};})(); n.addEventListener('input',upd); m.addEventListener('input',upd); item.querySelector('.project-remove').addEventListener('click',()=>{projects.splice(idx,1); if(selectedProjectIdx===idx)selectedProjectIdx=-1; else if(selectedProjectIdx>idx)selectedProjectIdx--; saveProjects();renderProjectList();renderProjectSelect();renderAll();}); });
   }
   loadProjects();
-  // 顧客・取引先情報はコードに埋め込まず、利用者が「編集」から登録（ブラウザ内のみ保存）
-
   renderProjectSelect(); renderProjectList();
   projectSelect.addEventListener('change',()=>{selectedProjectIdx=parseInt(projectSelect.value,10); if(isNaN(selectedProjectIdx))selectedProjectIdx=-1; saveProjects(); renderAll();});
   projectEditBtn.addEventListener('click',()=>{const o=projectPanel.style.display!=='none'; projectPanel.style.display=o?'none':'block'; projectEditBtn.textContent=o?'編集':'閉じる';});
@@ -305,7 +393,72 @@
   sigEditBtn.addEventListener('click',()=>{const o=sigPanel.style.display!=='none'; sigPanel.style.display=o?'none':'block'; sigEditBtn.textContent=o?'編集':'閉じる';});
   sigAddBtn.addEventListener('click',()=>{signatures.push({name:'',intro:'株式会社○○の△△と申します。',block:DEFAULT_SIG_BLOCK});saveSignatures();renderSigList();renderSigSelect();});
   function activeSig(){ return signatures[selectedSigIdx]||signatures[0]; }
+  // ===== テンプレート管理（3層：会社標準 / 個人カスタム / その場編集） =====
+  const TPL_COMPANY_KEY='alphadrive_tpl_company', TPL_PERSONAL_KEY='alphadrive_tpl_personal', ADMIN_KEY='alphadrive_admin_mode';
+  let companyTpl={}, personalTpl={}, adminMode=false;
+  function deepClone(o){ return JSON.parse(JSON.stringify(o)); }
+  function loadTemplates(){
+    try{ const c=localStorage.getItem(TPL_COMPANY_KEY); companyTpl=c?JSON.parse(c):deepClone(DEFAULT_TEMPLATES); }catch(e){ companyTpl=deepClone(DEFAULT_TEMPLATES); }
+    try{ const p=localStorage.getItem(TPL_PERSONAL_KEY); personalTpl=p?JSON.parse(p):{}; }catch(e){ personalTpl={}; }
+    try{ adminMode=localStorage.getItem(ADMIN_KEY)==='1'; }catch(e){}
+    // 会社標準に無いステータス（将来追加分の欠損）を初期値で補完
+    ['meeting','doc'].forEach(mk=>{ if(!companyTpl[mk])companyTpl[mk]={}; STATUS_ORDER.forEach(st=>{ if(!companyTpl[mk][st]&&DEFAULT_TEMPLATES[mk]&&DEFAULT_TEMPLATES[mk][st])companyTpl[mk][st]=deepClone(DEFAULT_TEMPLATES[mk][st]); }); });
+  }
+  function saveCompanyTpl(){ try{ localStorage.setItem(TPL_COMPANY_KEY,JSON.stringify(companyTpl)); }catch(e){} }
+  function savePersonalTpl(){ try{ localStorage.setItem(TPL_PERSONAL_KEY,JSON.stringify(personalTpl)); }catch(e){} }
+  loadTemplates();
 
+  // 実際に使うひな形：個人カスタムがあれば優先、なければ会社標準
+  function effectiveTemplate(mk,st){
+    if(personalTpl[mk]&&personalTpl[mk][st]) return { tpl:personalTpl[mk][st], custom:true };
+    if(companyTpl[mk]&&companyTpl[mk][st]) return { tpl:companyTpl[mk][st], custom:false };
+    const d=DEFAULT_TEMPLATES[mk]&&DEFAULT_TEMPLATES[mk][st]; return { tpl:d||{subject:'',body:''}, custom:false };
+  }
+
+  // ===== ステータスチップ描画 =====
+  function renderStatusChips(){
+    statusChips.innerHTML=STATUS_ORDER.map(st=>`<button class="status-chip ${st===currentStatus?'active':''}" data-st="${st}">${escapeHtml(STATUS_LABEL[st]||st)}</button>`).join('');
+    statusChips.querySelectorAll('.status-chip').forEach(b=>b.addEventListener('click',()=>{ currentStatus=b.dataset.st; renderStatusChips(); if(tplPanel.style.display!=='none')renderTplEditor(); renderAll(); }));
+  }
+
+  // ===== 管理者モード・テンプレ編集 =====
+  adminToggle.checked=adminMode;
+  document.body.classList.toggle('admin-on',adminMode);
+  adminToggle.addEventListener('change',()=>{ adminMode=adminToggle.checked; document.body.classList.toggle('admin-on',adminMode); try{localStorage.setItem(ADMIN_KEY,adminMode?'1':'0');}catch(e){} if(!adminMode){tplPanel.style.display='none';tplEditBtn.textContent='ひな形を編集';} });
+  let tplScope='company'; // 'company' or 'personal'
+  tplEditBtn.addEventListener('click',()=>{ const o=tplPanel.style.display!=='none'; tplPanel.style.display=o?'none':'block'; tplEditBtn.textContent=o?'ひな形を編集':'閉じる'; if(!o)renderTplEditor(); });
+  tplScopeCompany.addEventListener('click',()=>{ tplScope='company'; tplScopeCompany.classList.add('active'); tplScopePersonal.classList.remove('active'); renderTplEditor(); });
+  tplScopePersonal.addEventListener('click',()=>{ tplScope='personal'; tplScopePersonal.classList.add('active'); tplScopeCompany.classList.remove('active'); renderTplEditor(); });
+  tplReset.addEventListener('click',()=>{
+    const mk=mailKey();
+    if(tplScope==='personal'){ if(personalTpl[mk])delete personalTpl[mk][currentStatus]; savePersonalTpl(); }
+    else { if(DEFAULT_TEMPLATES[mk]&&DEFAULT_TEMPLATES[mk][currentStatus]){ if(!companyTpl[mk])companyTpl[mk]={}; companyTpl[mk][currentStatus]=deepClone(DEFAULT_TEMPLATES[mk][currentStatus]); saveCompanyTpl(); } }
+    renderTplEditor(); renderAll();
+  });
+  function renderTplEditor(){
+    const mk=mailKey(), st=currentStatus;
+    let src;
+    if(tplScope==='personal'){ src=(personalTpl[mk]&&personalTpl[mk][st])||(companyTpl[mk]&&companyTpl[mk][st])||{subject:'',body:''}; }
+    else { src=(companyTpl[mk]&&companyTpl[mk][st])||{subject:'',body:''}; }
+    const scopeName = tplScope==='personal' ? '個人カスタム（自分だけ）' : '会社標準（全員の初期値）';
+    tplEditor.innerHTML=`
+      <div class="tpl-block">
+        <div class="tpl-head"><span class="tpl-status-name">${escapeHtml(STATUS_LABEL[st]||st)}</span><span style="font-size:11px;color:#8a6a42;">${escapeHtml(scopeName)}</span></div>
+        <label>件名</label>
+        <input class="tpl-subject" value="${escapeHtml(src.subject||'')}" placeholder="件名（差し込みタグ使用可）"/>
+        <label>本文</label>
+        <textarea class="tpl-body" placeholder="本文（差し込みタグ使用可）">${escapeHtml(src.body||'')}</textarea>
+      </div>`;
+    const subj=tplEditor.querySelector('.tpl-subject'), body=tplEditor.querySelector('.tpl-body');
+    const upd=(()=>{let t;return()=>{clearTimeout(t);t=setTimeout(()=>{
+      const obj={ subject:subj.value, body:body.value, label:STATUS_LABEL[st]||st };
+      if(tplScope==='personal'){ if(!personalTpl[mk])personalTpl[mk]={}; personalTpl[mk][st]=obj; savePersonalTpl(); }
+      else { if(!companyTpl[mk])companyTpl[mk]={}; companyTpl[mk][st]=obj; saveCompanyTpl(); }
+      renderAll();
+    },300);};})();
+    subj.addEventListener('input',upd); body.addEventListener('input',upd);
+  }
+  renderStatusChips();
   // ===== 正規表現・ヘッダー（元コードを継承） =====
   const RE = {
     phone: /^[\s]*\(?0\d{1,4}\)?[-(\s.]?\d{1,4}[-)\s.]?\d{3,4}[\s]*$/,
@@ -407,9 +560,7 @@
       if(RE.facility.test(c)){const isCorp=/(株式会社|有限会社|合同会社|社会福祉法人|医療法人|学校法人|一般財団法人|公益財団法人|NPO法人|\(株\)|（株）|HD|ホールディングス|グループ|商事|不動産|電鉄|販売|建設|工業|製作所|食品|物産|機構|協会|学園)/.test(c); if(isCorp&&!fields.corporation){fields.corporation=c;return;} if(!fields.facility){fields.facility=c;return;} if(!fields.corporation){fields.corporation=c;return;}}
       pc.push(c);
     });
-    // 施設名がキーワードで取れなかった場合のフォールバック：残りセルの先頭（住所/人名/URLでないもの）を施設名に
     if(!fields.facility&&!fields.corporation){ const cand=pc.find(c=>c.length<=40&&!RE.address.test(c)&&!RE.sama.test(c)&&!RE.samaAnywhere.test(c)&&!/^https?:/i.test(c)); if(cand){fields.facility=cand; pc.splice(pc.indexOf(cand),1);} }
-    // 代表者名候補（人名らしきもの）をrepへ。担当者名の最終確定はfinalizeRecord（コメント最優先）
     if(pc.length){const repCand=pc.find(c=>c.length<=20&&!RE.address.test(c)&&!RE.facility.test(c)&&!/^https?:/i.test(c)); if(repCand)fields.rep=normalizePerson(repCand);}
     const callRounds=[]; let i=0;
     while(i<tailCells.length){
@@ -430,27 +581,22 @@
 
     const cfg=MODE_CONFIG[MODE];
     const wantDoc = cfg.kind==='report' ? cfg.priorityResult==='doc' : (cfg.mailType==='doc');
-    // 優先採用ラウンド（最終結果＝アポ獲得/資料請求の回。無ければ最後の回）
     let priorityCall;
     if(wantDoc){ priorityCall=[...uc].reverse().find(c=>RE.docResult.test(c.result||'')||RE.docResult.test(c.comment||'')); }
     else { priorityCall=[...uc].reverse().find(c=>RE.apoResult.test(c.result||'')); }
     const latest=priorityCall||(uc.length?uc[uc.length-1]:null);
 
-    // コメントを「最終結果の回 → それ以外の回（新しい順）」で並べ、名前/メール/日時を優先採用
     const orderedComments=[];
     if(latest&&latest.comment)orderedComments.push(latest.comment);
     [...uc].reverse().forEach(c=>{ if(c!==latest&&c.comment)orderedComments.push(c.comment); });
 
-    // メール：明示列 → コメント（最終回優先）
     if(!fields.mail){ for(const cm of orderedComments){ const m=cm.match(RE.mailLoose); if(m){fields.mail=m[1];break;} } }
     if(!fields.mail){const m=allText.match(RE.mailLoose); if(m)fields.mail=m[1];}
 
-    // 別拠点の担当・電話（コメント全体から）
     let branchName='',branchPhone='';
     for(const cm of allComments){ if(!branchName){const bm=cm.match(/([一-龥ぁ-んァ-ヴー々]{2,15}?)(?:に担当|担当いる|の方が担当|の担当|担当者は)/); if(bm)branchName=bm[1];} if(!branchPhone){const phm=cm.match(RE.phoneLoose); if(phm){const ps=normalizePhone(phm[1]); if(ps!==fields.phone)branchPhone=ps;}} if(branchName&&branchPhone)break; }
     const finalPhone=branchPhone||fields.phone||'';
 
-    // 担当者名：コメントの「○○様/さん」を最終回優先で採用 → 無ければ代表者名 → 無ければ「ご担当者様」
     let finalPerson='';
     for(const cm of orderedComments){ const sn=extractSamaName(cm); if(sn){finalPerson=sn;break;} }
     if(!finalPerson&&fields.rep)finalPerson=fields.rep;
@@ -459,7 +605,6 @@
     let facilityCombined=fields.facility||fields.corporation||'';
     if(branchName){facilityCombined=facilityCombined?(facilityCombined+'　'+branchName):branchName;}
 
-    // 日程／送付方法（最終回優先で日時を拾い、無ければ他の回から）
     let scheduleStr='';
     function buildSchedule(cm){
       if(!cm)return '';
@@ -492,7 +637,6 @@
     }
     return { schedule:scheduleStr, facility:facilityCombined, address:fields.address||'', person:finalPerson, phone:finalPhone, mail:fields.mail||'', note:noteStr, warnings };
   }
-
   // ===== レンダリング =====
   let records=[];
   const TODO='【要入力】';
@@ -500,7 +644,7 @@
 
   function renderReportText(r){
     const cfg=MODE_CONFIG[MODE];
-    if(cfg.kind==='mail') return renderMailText(r);
+    if(cfg.kind==='mail') return renderMail(r).body;
     const name=reporter.value.trim(), mentions=getActiveMentions();
     const schedLabel = cfg.priorityResult==='doc' ? '送付方法' : '日程';
     let out='';
@@ -517,33 +661,64 @@
     return out;
   }
 
-  function renderMailText(r){
+  // 差し込み値を集める（ロック値＝署名・サービスURLは登録値を採用）
+  function buildVars(r){
     const cfg=MODE_CONFIG[MODE], sig=activeSig();
     const person=(r.person&&r.person.trim())?r.person.trim():'ご担当者';
     const intro=(sig.intro||'').trim();
     const block=(sig.block||'').trim();
+    let svcName, svcUrl, content='', link='', dt='', docs='', next='';
     if(cfg.mailType==='meeting'){
-      const dt=v($('m-datetime').value), link=$('m-link').value.trim(), content=v($('m-content').value);
-      const svcName=v($('m-service-name').value), svcUrl=v($('m-service-url').value);
-      return `${person}\nお世話になっております。\n${intro}\n本日はお時間をいただきありがとうございました。\nお電話でお伝えしましたサービスの概要および面談に関するご案内です。\n\n【ご案内サービス】\n${svcName}\n${svcUrl}\n\n【ご面談の詳細】\n日時：${dt}\n内容：${content}\nリンク：${link||TODO}\n\nお忙しいところお時間をいただきまして、誠にありがとうございます。\n当日は何卒よろしくお願いいたします。\n\n${block}`;
+      svcName=$('m-service-name').value.trim(); svcUrl=$('m-service-url').value.trim();
+      content=$('m-content').value.trim(); link=$('m-link').value.trim(); dt=$('m-datetime').value.trim();
     } else {
-      const docs=$('d-docs').value.trim(); const docsList=docs?docs.split(/[,、]/).map(s=>'・'+s.trim()).join('\n'):'・'+TODO;
-      const svcName=v($('d-service-name').value), svcUrl=v($('d-service-url').value);
-      const next=$('d-nextstep').value.trim()||'改めてお電話にてご状況を伺えればと存じます。';
-      return `${person}\nお世話になっております。\n${intro}\n本日はお電話でのご対応、誠にありがとうございました。\nご依頼いただきました資料をお送りいたします。\n\n【ご案内サービス】\n${svcName}\n${svcUrl}\n\n【送付資料】\n${docsList}\n\nご不明な点がございましたら、お気軽にお問い合わせください。\n${next}\n何卒よろしくお願いいたします。\n\n${block}`;
+      svcName=$('d-service-name').value.trim(); svcUrl=$('d-service-url').value.trim();
+      const draw=$('d-docs').value.trim(); docs=draw?draw.split(/[,、]/).map(s=>'・'+s.trim()).join('\n'):'・'+TODO;
+      next=$('d-nextstep').value.trim()||'お電話にてご状況を伺えればと存じます。';
     }
+    return {
+      '{宛名}': person,
+      '{名乗り}': intro,
+      '{署名}': block,
+      '{サービス名}': svcName||TODO,
+      '{サービスURL}': svcUrl||TODO,
+      '{面談内容}': content||TODO,
+      '{リンク}': link||TODO,
+      '{日時}': dt||TODO,
+      '{送付資料}': docs,
+      '{次回連絡}': next,
+      '{施設名}': r.facility||TODO
+    };
+  }
+  function fillTemplate(str,vars){
+    if(!str)return '';
+    return str.replace(/\{[^}]+\}/g,m=> (m in vars)?vars[m]:m );
+  }
+
+  // メール生成：{subject, body, custom}
+  function renderMail(r){
+    const mk=mailKey(), st=currentStatus;
+    const { tpl, custom } = effectiveTemplate(mk,st);
+    const vars=buildVars(r);
+    return { subject: fillTemplate(tpl.subject||'',vars), body: fillTemplate(tpl.body||'',vars), custom };
   }
 
   function escapeHtml(s){ return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
   function makeCardHTML(r,i){
     const cfg=MODE_CONFIG[MODE];
-    const reportText=cfg.kind==='mail'?renderMailText(r):renderReportText(r);
+    const isMail=cfg.kind==='mail';
+    let mail=null;
+    if(isMail)mail=renderMail(r);
+    const reportText=isMail?mail.body:renderReportText(r);
     const warnHtml=r.warnings&&r.warnings.length?r.warnings.map(w=>`<span class="warn" data-warn="${escapeHtml(w)}">⚠ ${escapeHtml(w)}</span>`).join(' '):'';
     const idxLabel=records.length>1?`<span class="result-index">#${i+1}</span>`:'';
     const hasWarn=r.warnings&&r.warnings.length?' has-warn':'';
+    const statusTag=isMail?`<span class="custom-flag" style="background:#e6f1ec;color:#0f6e56;border-color:#bfe0d2;">${escapeHtml(STATUS_LABEL[currentStatus]||currentStatus)}</span>`:'';
+    const customTag=(isMail&&mail.custom)?`<span class="custom-flag">個人カスタム</span>`:'';
+    const subjectHtml=isMail?`<div class="subject-line"><span class="subj-key">件名：</span>${escapeHtml(mail.subject)}</div>`:'';
     const schedLabel = cfg.kind==='report' ? (cfg.priorityResult==='doc'?'送付方法':'日程') : '宛名上の日程';
-    const editRows = cfg.kind==='mail'
+    const editRows = isMail
       ? `<div class="field-row" data-field="person"><span class="field-label">宛名（様）</span><input class="field-edit" data-key="person" value="${escapeHtml(r.person)}"/></div>
          <div class="field-row" data-field="facility"><span class="field-label">施設名</span><input class="field-edit" data-key="facility" value="${escapeHtml(r.facility)}"/></div>
          <div class="field-row" data-field="mail"><span class="field-label">メール</span><input class="field-edit" data-key="mail" value="${escapeHtml(r.mail)}"/></div>`
@@ -557,7 +732,7 @@
     return `
       <div class="result-card${hasWarn}" data-idx="${i}">
         <div class="result-head">
-          <div class="result-title">${idxLabel}<span>出力結果</span> ${warnHtml}</div>
+          <div class="result-title">${idxLabel}<span>出力結果</span>${statusTag}${customTag} ${warnHtml}</div>
           <div class="result-actions">
             <button class="card-copy primary">📋 コピー</button>
             <button class="card-edit">✎ 修正</button>
@@ -565,11 +740,19 @@
           </div>
         </div>
         <div class="edit-panel">${editRows}</div>
-        <div class="body">${escapeHtml(reportText)}</div>
+        ${subjectHtml}
+        <div class="body${isMail?' with-subject':''}">${escapeHtml(reportText)}</div>
       </div>`;
   }
 
   const WARN_FIELD_MAP={'電話番号なし':'phone','担当者名なし':'person','施設名なし':'facility','施設名は推定':'facility','住所なし':'address','メールアドレスなし':'mail','日程未抽出／要確認':'schedule'};
+
+  // コピー用テキスト（メールは件名＋本文）
+  function copyTextFor(idx){
+    const cfg=MODE_CONFIG[MODE];
+    if(cfg.kind==='mail'){ const m=renderMail(records[idx]); return '件名：'+m.subject+'\n\n'+m.body; }
+    return renderReportText(records[idx]);
+  }
 
   function renderAll(){
     if(!records.length){results.innerHTML='';copyAllBtn.style.display='none';summaryBar.style.display='none';return;}
@@ -583,10 +766,10 @@
   function bindCardEvents(){
     results.querySelectorAll('.result-card').forEach(card=>{
       const idx=+card.dataset.idx;
-      card.querySelector('.card-copy').addEventListener('click',e=>{const btn=e.currentTarget; const txt=MODE_CONFIG[MODE].kind==='mail'?renderMailText(records[idx]):renderReportText(records[idx]); navigator.clipboard.writeText(txt).then(()=>{btn.classList.remove('primary');btn.classList.add('ok');btn.textContent='✓ コピー済';setTimeout(()=>{btn.classList.add('primary');btn.classList.remove('ok');btn.textContent='📋 コピー';},1500);});});
+      card.querySelector('.card-copy').addEventListener('click',e=>{const btn=e.currentTarget; const txt=copyTextFor(idx); navigator.clipboard.writeText(txt).then(()=>{btn.classList.remove('primary');btn.classList.add('ok');btn.textContent='✓ コピー済';setTimeout(()=>{btn.classList.add('primary');btn.classList.remove('ok');btn.textContent='📋 コピー';},1500);});});
       card.querySelector('.card-edit').addEventListener('click',()=>card.querySelector('.edit-panel').classList.toggle('open'));
       const rb=card.querySelector('.card-remove'); if(rb)rb.addEventListener('click',()=>{records.splice(idx,1);renderAll();});
-      card.querySelectorAll('.field-edit').forEach(inp=>inp.addEventListener('input',()=>{records[idx][inp.dataset.key]=inp.value; const txt=MODE_CONFIG[MODE].kind==='mail'?renderMailText(records[idx]):renderReportText(records[idx]); card.querySelector('.body').textContent=txt;}));
+      card.querySelectorAll('.field-edit').forEach(inp=>inp.addEventListener('input',()=>{records[idx][inp.dataset.key]=inp.value; const cfg=MODE_CONFIG[MODE]; if(cfg.kind==='mail'){const m=renderMail(records[idx]); const sl=card.querySelector('.subject-line'); if(sl)sl.innerHTML='<span class="subj-key">件名：</span>'+escapeHtml(m.subject); card.querySelector('.body').textContent=m.body;} else {card.querySelector('.body').textContent=renderReportText(records[idx]);}}));
       card.querySelectorAll('.warn').forEach(w=>w.addEventListener('click',()=>{const p=card.querySelector('.edit-panel');p.classList.add('open');const fn=WARN_FIELD_MAP[w.dataset.warn];if(fn){const row=card.querySelector(`.field-row[data-field="${fn}"]`);const inp=row&&row.querySelector('.field-edit');if(inp){card.querySelectorAll('.field-row').forEach(r=>r.classList.remove('focused'));row.classList.add('focused');setTimeout(()=>{inp.focus();inp.select&&inp.select();},50);}}}));
     });
   }
@@ -602,14 +785,13 @@
     if(records.length>0){const f=results.querySelector('.result-card');if(f)f.scrollIntoView({behavior:'smooth',block:'start'});}
   }
 
-  // メール差し込み欄が変わったら出力を更新
   ['m-datetime','m-link','m-content','m-service-name','m-service-url','d-docs','d-service-name','d-service-url','d-nextstep'].forEach(id=>{const el=$(id); if(el)el.addEventListener('input',()=>{if(records.length)renderAll();});});
 
   parseBtn.addEventListener('click',doParse);
   input.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();doParse();}if(e.key==='Escape'){input.value='';records=[];renderAll();autoResize();}});
   function autoResize(){input.style.height='auto';input.style.height=Math.min(Math.max(input.scrollHeight+4,130),400)+'px';}
   input.addEventListener('input',autoResize);
-  copyAllBtn.addEventListener('click',()=>{if(!records.length)return;const all=records.map(r=>MODE_CONFIG[MODE].kind==='mail'?renderMailText(r):renderReportText(r)).join('\n\n---\n\n');navigator.clipboard.writeText(all).then(()=>{copyAllBtn.classList.add('ok');copyAllBtn.textContent='✓ コピー済';setTimeout(()=>{copyAllBtn.classList.remove('ok');copyAllBtn.textContent='📋 全件コピー';},1500);});});
+  copyAllBtn.addEventListener('click',()=>{if(!records.length)return;const all=records.map((r,i)=>copyTextFor(i)).join('\n\n---\n\n');navigator.clipboard.writeText(all).then(()=>{copyAllBtn.classList.add('ok');copyAllBtn.textContent='✓ コピー済';setTimeout(()=>{copyAllBtn.classList.remove('ok');copyAllBtn.textContent='📋 全件コピー';},1500);});});
 
   const SAMPLES={
     apo:'\t\t株式会社サンプル\tサンプル施設\t000-0000-0000\t担当A\t2026/04/02\t15:28:01\tアポ獲得\t"本日休み、来週火水木出勤\n\n5/12 訪問希望　大体14:30以降希望"\t1/28\t9:44\t不在\t別拠点に担当いる000-0000-0001\t',
@@ -631,13 +813,11 @@
     $('mail-fields').classList.toggle('hidden',!isMail);
     $('help-report').classList.toggle('hidden',isMail);
     $('help-mail').classList.toggle('hidden',!isMail);
-    if(isMail){ $('mail-meeting-fields').classList.toggle('hidden',cfg.mailType!=='meeting'); $('mail-doc-fields').classList.toggle('hidden',cfg.mailType!=='doc'); renderCaseSelect(); if(selectedCaseIdx>=0)applyCaseToFields(selectedCaseIdx); }
-    // 再パース（同じ貼り付けで出力切替）
+    if(isMail){ $('mail-meeting-fields').classList.toggle('hidden',cfg.mailType!=='meeting'); $('mail-doc-fields').classList.toggle('hidden',cfg.mailType!=='doc'); renderCaseSelect(); if(selectedCaseIdx>=0)applyCaseToFields(selectedCaseIdx); renderStatusChips(); if(tplPanel.style.display!=='none')renderTplEditor(); }
     if(input.value.trim())doParse(); else renderAll();
   }
   document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>applyMode(t.dataset.mode)));
   applyMode('apo');
 })();
-
 </script>
 </body></html>
