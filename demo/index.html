@@ -137,6 +137,16 @@
   .slack-bar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 10px; padding: 10px 12px; background: #faf9f4; border: 1px solid #ece9de; border-radius: 8px; }
   .slack-bar select, .slack-bar input { padding: 6px 10px; border: 1px solid #d3d1c7; border-radius: 5px; font-size: 12px; font-family: inherit; }
   .slack-bar .slack-msg { flex: 1; min-width: 200px; }
+  .fb-bar { margin-top: 8px; }
+  .fb-open { background:#fff; border:1px solid #c9b8e0; color:#6a4ca5; font-size:12px; padding:6px 12px; }
+  .fb-open:hover { background:#f4eefb; }
+  .fb-panel { margin-top: 8px; padding: 12px; background:#f7f3fc; border:1px solid #ddd0ee; border-radius:8px; }
+  .fb-note { font-size:11px; color:#6a4ca5; margin-bottom:8px; line-height:1.6; }
+  .fb-label { display:block; font-size:11px; color:#5f5e5a; font-weight:600; margin:8px 0 3px; }
+  .fb-text { width:100%; min-height:56px; padding:6px 10px; border:1px solid #ddd0ee; border-radius:5px; font-size:12px; font-family:inherit; resize:vertical; }
+  .fb-preview { white-space:pre-wrap; font-family:"SF Mono",Consolas,monospace; font-size:11px; background:#fff; border:1px solid #e0d5f0; border-radius:5px; padding:8px 10px; margin:3px 0 0; max-height:220px; overflow:auto; line-height:1.6; }
+  .fb-actions { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:8px; }
+  .fb-actions select { padding:6px 10px; border:1px solid #d3d1c7; border-radius:5px; font-size:12px; }
   @media (max-width: 600px) { .conn-row { grid-template-columns: 1fr; } .wh-item { grid-template-columns: 1fr; } }
   @media (max-width: 600px) { body { padding: 12px; } .panel, header, .help { padding: 16px; } .field-row { grid-template-columns: 80px 1fr; } .copy-all { margin-left: 0; width: 100%; } }
 </style>
@@ -677,7 +687,8 @@
       else if(type==='mail'){if(cell&&!fields.mail)fields.mail=normalizeMail(cell);}
       else if(type==='rep'){if(cell&&!fields.rep)fields.rep=normalizePerson(cell);}
       else if(type==='dept_unit'){if(cell&&!fields.dept_unit)fields.dept_unit=cell.trim();}
-      else if(type==='dept'||type==='site'||type==='person'){/* 報告には出さない：診療科目/サイトURL/自社架電担当 */}
+      else if(type==='person'){ if(cell){ const sn=extractSamaName(cell); if(sn&&!fields.rep)fields.rep=sn; else if(!fields.rep&&MODE_CONFIG[MODE].kind==='mail'&&!RE.facility.test(cell)&&cell.length<=20)fields.rep=normalizePerson(cell); } }
+      else if(type==='dept'||type==='site'){/* 報告には出さない：診療科目/サイトURL */}
       else if(fields[type]!==undefined&&cell&&!fields[type]){fields[type]=cell;}
     });
     if(cur&&Object.keys(cur).length)callRounds.push(cur);
@@ -924,6 +935,35 @@
 
   function escapeHtml(s){ return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+  // 顧客データを機械的に伏せ字化（外部送信前にブラウザ内で実行）
+  function redactCustomerData(text, r){
+    if(!text)return '';
+    let out=text;
+    // 置換は長い文字列から先に（部分一致の取りこぼし対策）
+    const repl=[];
+    if(r.facility){ // 「　」で連結された別拠点名も個別に
+      r.facility.split(/[　\s]+/).filter(Boolean).forEach(f=>{ if(f.length>=2)repl.push([f,'[会社名]']); });
+      repl.push([r.facility,'[会社名]']);
+    }
+    if(r.person && r.person!=='ご担当者様'){
+      const base=r.person.replace(/\s*(様|さん|御中|殿)\s*$/,'').trim();
+      if(base)repl.push([base,'[担当者]']);
+      repl.push([r.person,'[担当者]']);
+      // 姓だけの言及も伏せる（スペース区切りの最初の塊）
+      const sei=base.split(/[ 　]/)[0]; if(sei&&sei.length>=2)repl.push([sei,'[担当者]']);
+    }
+    if(r.dept){ repl.push([r.dept,'[部署]']); }
+    if(r.phone){ repl.push([r.phone,'[電話番号]']); }
+    if(r.mail){ repl.push([r.mail,'[メール]']); }
+    // 長い順にソートして順次置換
+    repl.sort((a,b)=>b[0].length-a[0].length);
+    repl.forEach(([from,to])=>{ if(from && from.length>=2){ out=out.split(from).join(to); } });
+    // 電話番号・メールの取りこぼしをパターンでも伏せる
+    out=out.replace(/[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}/g,'[メール]');
+    out=out.replace(/\(?0\d{1,4}\)?[-(\s.]?\d{1,4}[-)\s.]?\d{3,4}/g,'[電話番号]');
+    return out;
+  }
+
   function makeCardHTML(r,i){
     const cfg=MODE_CONFIG[MODE];
     const isMail=cfg.kind==='mail';
@@ -977,6 +1017,21 @@
           <select class="slack-target">${webhooks.map(w=>`<option value="${escapeHtml(w.key)}">${escapeHtml(w.label||w.key)}</option>`).join('')}</select>
           <button class="slack-send ghost" style="border:1px solid #d3d1c7;">送信</button>
           <span class="slack-status" style="font-size:11px;"></span>
+        </div>
+        <div class="fb-bar">
+          <button class="fb-open">💬 このメールへのフィードバックを送る</button>
+          <div class="fb-panel" style="display:none;">
+            <div class="fb-note">改善点・気づきを書いてSlackへ送ります。送信前に<b>顧客名・電話・メールは自動で伏せ字化</b>され、下のプレビューで確認できます（顧客データは保存しません）。</div>
+            <label class="fb-label">フィードバック（例：訪問希望なのに文面が硬い／結びがくどい 等）</label>
+            <textarea class="fb-text" placeholder="ここに改善点・気づきを書く"></textarea>
+            <label class="fb-label">送信内容プレビュー（この内容がSlackに送られます）</label>
+            <pre class="fb-preview"></pre>
+            <div class="fb-actions">
+              <select class="fb-target">${webhooks.map(w=>`<option value="${escapeHtml(w.key)}" ${w.key==='idea'?'selected':''}>${escapeHtml(w.label||w.key)}</option>`).join('')}</select>
+              <button class="fb-send" style="background:#0f6e56;color:#fff;border-color:#0f6e56;">プレビュー内容をSlackへ送信</button>
+              <span class="fb-status" style="font-size:11px;"></span>
+            </div>
+          </div>
         </div>`:''}
       </div>`;
   }
@@ -1053,6 +1108,51 @@
         try{ await callGas({ action:'slack', webhookKey:target, kind:kind, message:msg, sender:(reporter.value||'').trim() }); statusEl.textContent='✓ 送信しました'; statusEl.style.color='#0f6e56'; }
         catch(e){ statusEl.textContent='✗ '+e.message; statusEl.style.color='#a55b5b'; }
         finally{ slackBtn.disabled=false; slackBtn.textContent=orig; }
+      });
+
+      // フィードバック送信（伏せ字化＋プレビュー）
+      const fbOpen=card.querySelector('.fb-open');
+      const fbPanel=card.querySelector('.fb-panel');
+      const fbText=card.querySelector('.fb-text');
+      const fbPreview=card.querySelector('.fb-preview');
+      const fbSend=card.querySelector('.fb-send');
+      const fbTarget=card.querySelector('.fb-target');
+      const fbStatus=card.querySelector('.fb-status');
+      function buildFbPreview(){
+        const r=records[idx];
+        const mail=renderMail(r);
+        // 伏せ字化した本文＋件名
+        const redactedSubject=redactCustomerData(mail.subject,r);
+        const redactedBody=redactCustomerData(mail.body,r);
+        const fb=(fbText.value||'').trim();
+        const statusLabel=STATUS_LABEL[(r.status||currentStatus)]||(r.status||currentStatus);
+        const typeLabel=MAILTYPE_LABEL[currentMailType]||currentMailType;
+        const parts=[
+          '【メール改善フィードバック】',
+          '種別：'+typeLabel+' / 状況：'+statusLabel,
+          '',
+          '◆フィードバック',
+          fb||'（未記入）',
+          '',
+          '◆対象メール（顧客名・連絡先は伏せ字済み）',
+          '件名：'+redactedSubject,
+          '',
+          redactedBody.trim()
+        ];
+        return parts.join('\n');
+      }
+      function refreshFbPreview(){ if(fbPreview)fbPreview.textContent=buildFbPreview(); }
+      if(fbOpen)fbOpen.addEventListener('click',()=>{ const o=fbPanel.style.display!=='none'; fbPanel.style.display=o?'none':'block'; if(!o)refreshFbPreview(); });
+      if(fbText)fbText.addEventListener('input',refreshFbPreview);
+      if(fbSend)fbSend.addEventListener('click',async()=>{
+        if(!gasUrl){ alert('GAS URLが未設定です。管理者モード→連携設定で登録してください。'); return; }
+        const target=fbTarget.value;
+        const msg=buildFbPreview(); // プレビューと完全一致の内容を送る
+        const orig=fbSend.textContent; fbSend.disabled=true; fbSend.textContent='送信中…';
+        fbStatus.textContent='';
+        try{ await callGas({ action:'slack', webhookKey:target, kind:'idea', message:msg, sender:(reporter.value||'').trim() }); fbStatus.textContent='✓ 送信しました'; fbStatus.style.color='#0f6e56'; }
+        catch(e){ fbStatus.textContent='✗ '+e.message; fbStatus.style.color='#a55b5b'; }
+        finally{ fbSend.disabled=false; fbSend.textContent=orig; }
       });
     });
   }
