@@ -210,7 +210,7 @@
 
     <!-- 相手ステータス（メールモード用） -->
     <div class="status-row mode-mail hidden" id="status-row">
-      <label>状況の既定<br><span style="font-size:10px;color:#a98;font-weight:400;">自動判別の保険</span></label>
+      <label>状況<br><span style="font-size:10px;color:#a98;font-weight:400;">選ぶと全カードに反映</span></label>
       <div class="status-chips" id="status-chips"></div>
     </div>
 
@@ -329,7 +329,7 @@
     <ul>
       <li><b>Claude用プロンプト</b>：各カードの「📋 Claude用プロンプト」を押すと、たたき台・宛名・架電メモ・状況をまとめたプロンプトをコピー。お使いのClaudeに貼れば、メモを反映した仕上げメールが得られます（このツール内では課金は発生しません）</li>
       <li><b>ステータス自動判別</b>：架電コメントの文言から「訪問希望・オンライン・社内展開・フォロー確約」を自動推定し、各カードに🤖自動判別と表示。外れていたらカード上のプルダウンで即変更できます</li>
-      <li><b>状況の既定</b>：コメントから判別できなかったときに使う既定値を上部チップで指定（保険）</li>
+      <li><b>状況で文面が変わる</b>：上部チップで状況（訪問希望／オンライン／社内展開／フォロー確約／その他）を選ぶと、全カードのメール文面が切り替わります。各カードの🤖は架電コメントからの自動判別で、カード右上のプルダウンで個別に直せます</li>
       <li><b>スプシ貼り付け</b>：宛名（○○様）・施設名・担当者をコピペした行から自動抽出してメールに差し込みます</li>
       <li><b>差し込み項目</b>：面談日時・リンク・サービスURL等は上の入力欄で指定（行ごとに共通で入ります）</li>
       <li><b>送信者</b>：上部の「送信者」で署名を切り替え。複数メンバー分を登録できます</li>
@@ -565,7 +565,7 @@
   // ===== ステータスチップ描画 =====
   function renderStatusChips(){
     statusChips.innerHTML=STATUS_ORDER.map(st=>`<button class="status-chip ${st===currentStatus?'active':''}" data-st="${st}">${escapeHtml(STATUS_LABEL[st]||st)}</button>`).join('');
-    statusChips.querySelectorAll('.status-chip').forEach(b=>b.addEventListener('click',()=>{ currentStatus=b.dataset.st; renderStatusChips(); if(tplPanel.style.display!=='none')renderTplEditor(); renderAll(); }));
+    statusChips.querySelectorAll('.status-chip').forEach(b=>b.addEventListener('click',()=>{ currentStatus=b.dataset.st; if(MODE_CONFIG[MODE].kind==='mail'){ records.forEach(r=>{ r.status=currentStatus; r.statusAuto=false; }); } renderStatusChips(); if(tplPanel.style.display!=='none')renderTplEditor(); renderAll(); }));
   }
 
   // ===== メール種別チップ描画 =====
@@ -822,7 +822,7 @@
     let detectedStatus='';
     for(const cm of orderedComments){ const s=detectStatusFromText(cm); if(s){detectedStatus=s;break;} }
     if(!detectedStatus){ const s=detectStatusFromText(allText); if(s)detectedStatus=s; }
-    return { schedule:scheduleStr, facility:facilityCombined, address:fields.address||'', person:finalPerson, phone:finalPhone, mail:fields.mail||'', note:noteStr, dept:fields.dept_unit||'', status:detectedStatus, warnings };
+    return { schedule:scheduleStr, facility:facilityCombined, address:fields.address||'', person:finalPerson, phone:finalPhone, mail:fields.mail||'', note:noteStr, dept:fields.dept_unit||'', status:detectedStatus, statusAuto:!!detectedStatus, warnings };
   }
   // ===== レンダリング =====
   let records=[];
@@ -1010,7 +1010,7 @@
     const hasWarn=r.warnings&&r.warnings.length?' has-warn':'';
     const typeTag=isMail?`<span class="custom-flag">${escapeHtml(MAILTYPE_LABEL[currentMailType]||currentMailType)}</span>`:'';
     const cardStatus=isMail?(mail.usedStatus||currentStatus):'';
-    const autoFlag=(isMail && r.status)?`<span class="custom-flag" style="background:#e6f1ec;color:#0f6e56;border-color:#bfe0d2;" title="コメントから自動判別">🤖 自動判別</span>`:'';
+    const autoFlag=(isMail && r.statusAuto)?`<span class="custom-flag" style="background:#e6f1ec;color:#0f6e56;border-color:#bfe0d2;" title="コメントから自動判別">🤖 自動判別</span>`:'';
     const statusTag=isMail?`<select class="card-status" style="font-size:11px;padding:2px 6px;border:1px solid #bfe0d2;border-radius:6px;background:#f3faf6;color:#0f6e56;font-weight:600;">${STATUS_ORDER.map(st=>`<option value="${st}" ${st===cardStatus?'selected':''}>${escapeHtml(STATUS_LABEL[st]||st)}</option>`).join('')}</select>`:'';
     const customTag=(isMail&&mail.custom)?`<span class="custom-flag">個人カスタム</span>`:'';
     const subjectHtml=isMail?`<div class="subject-line"><span class="subj-key">件名：</span>${escapeHtml(mail.subject)}</div>`:'';
@@ -1093,7 +1093,7 @@
 
       // カード内ステータス変更（自動判別の手直し）
       const stSel=card.querySelector('.card-status');
-      if(stSel)stSel.addEventListener('change',()=>{ records[idx].status=stSel.value; renderAll(); });
+      if(stSel)stSel.addEventListener('change',()=>{ records[idx].status=stSel.value; records[idx].statusAuto=false; renderAll(); });
 
       // Claude用プロンプトをコピー（API不要・会社のClaudeに貼る）
       const promptBtn=card.querySelector('.card-prompt');
