@@ -128,8 +128,6 @@
   .wh-item input { padding: 6px 10px; border: 1px solid #c0cdda; border-radius: 5px; font-size: 12px; font-family: "SF Mono", Consolas, monospace; }
   .wh-item .wh-remove { padding: 4px 10px; font-size: 12px; color: #a55b5b; border-color: transparent; }
   /* AIボタン・Slack送信UI */
-  .card-ai { background: #fff; border-color: #c9b8e0; color: #6a4ca5; }
-  .card-ai:hover { background: #f4eefb; }
   .ai-msg-row { margin: 8px 0; padding: 8px 10px; background: #f7f3fc; border: 1px solid #ddd0ee; border-radius: 6px; }
   .ai-msg-row label { font-size: 11px; color: #6a4ca5; font-weight: 600; display: block; margin-bottom: 4px; }
   .ai-msg-row textarea { width: 100%; min-height: 56px; padding: 6px 10px; border: 1px solid #ddd0ee; border-radius: 5px; font-size: 12px; font-family: inherit; resize: vertical; }
@@ -251,7 +249,7 @@
     <!-- 連携設定（GAS / Slack）：管理者のみ -->
     <div class="conn-panel mode-mail admin-only" id="conn-panel" style="display:none;">
       <div class="project-help">
-        <b>外部連携の設定（管理者）</b>　AI個別文の生成とSlack送信に使うGASの接続先を登録します。APIキー等はGAS側に隠れるため、ここにはGASのURLとSlackの送信先ラベルのみを保存します（ブラウザ内のみ）。
+        <b>外部連携の設定（管理者）</b>　Slack送信（報告・フィードバック）に使うGASの接続先を登録します。APIキー等はGAS側に隠れるため、ここにはGASのURLとSlackの送信先ラベルのみを保存します（このブラウザ内のみ）。
       </div>
       <div class="conn-row">
         <label>GAS URL</label>
@@ -264,6 +262,10 @@
       <div class="conn-row" style="margin-top:10px;">
         <label>疎通テスト</label>
         <div><button id="gas-test" class="ghost" style="border:1px solid #c0cdda;">GAS接続を確認</button><span class="conn-status" id="gas-test-status"></span></div>
+      </div>
+      <div class="conn-row" style="margin-top:10px;">
+        <label>データ消去</label>
+        <div><button id="clear-data-btn" class="ghost" style="border:1px solid #e0c5c5;color:#a55b5b;">この端末の保存データを全消去</button><span class="conn-status" style="color:#8a6a42;">報告者名・案件・署名・ひな形・連携設定を削除（共有PC向け）</span></div>
       </div>
     </div>
   </header>
@@ -334,6 +336,9 @@
       <li><b>件名</b>：ステータスごとに件名も自動生成。カード上部に表示され、コピー時に件名＋本文がまとめて入ります</li>
       <li><b>ひな形の管理</b>：通常は選ぶだけ。管理者モードをONにすると会社標準ひな形を編集できます。各自の言い回しは「個人カスタム」で上書き可能（任意）</li>
       <li>※ 空欄が残った箇所は <code>【要入力】</code> と表示されるので、コピー後に手直ししてください</li>
+      <li><b>外部送信について</b>：架電メモを自動でAI／外部へ送る機能はありません。仕上げは「Claude用プロンプト」をコピーして社内のClaudeに貼る方式です</li>
+      <li><b>フィードバック</b>：各カードの「💬 …フィードバックを送る」から改善点をSlackへ送れます。送信前に顧客名・担当者・電話・メール・住所を自動で伏せ字化し、プレビューで確認できます（自動処理は保険なので、念のため目視確認を）</li>
+      <li><b>保存データの消去</b>：管理者モード→連携設定の「この端末の保存データを全消去」で、このブラウザに残る設定を消せます（共有PC向け）</li>
     </ul>
   </div>
 </div>
@@ -476,13 +481,17 @@
     whList.querySelectorAll('.wh-item').forEach(item=>{ const idx=+item.dataset.idx,k=item.querySelector('.wh-key'),l=item.querySelector('.wh-label'); const upd=(()=>{let t;return()=>{clearTimeout(t);t=setTimeout(()=>{webhooks[idx].key=k.value.trim();webhooks[idx].label=l.value.trim();saveConn();renderAll();},300);};})(); k.addEventListener('input',upd); l.addEventListener('input',upd); item.querySelector('.wh-remove').addEventListener('click',()=>{webhooks.splice(idx,1);saveConn();renderWhList();renderAll();}); });
   }
   renderWhList();
-  if(gasUrlInput)gasUrlInput.addEventListener('input',()=>{ gasUrl=gasUrlInput.value.trim(); saveConn(); });
+  if(gasUrlInput)gasUrlInput.addEventListener('input',()=>{ gasUrl=gasUrlInput.value.trim(); saveConn(); gasUrlInput.style.borderColor=(!gasUrl||isAllowedGasUrl(gasUrl))?'':'#a55b5b'; });
+  if(gasUrlInput&&gasUrl)gasUrlInput.style.borderColor=isAllowedGasUrl(gasUrl)?'':'#a55b5b';
   if(connEditBtn)connEditBtn.addEventListener('click',()=>{const o=connPanel.style.display!=='none'; connPanel.style.display=o?'none':'block'; connEditBtn.textContent=o?'連携設定':'閉じる';});
   if(whAdd)whAdd.addEventListener('click',()=>{webhooks.push({key:'',label:''});saveConn();renderWhList();const it=whList.querySelectorAll('.wh-item');const last=it[it.length-1];if(last)last.querySelector('.wh-key').focus();});
 
+  // GAS URLの検証：顧客データを含む本文を誤ったサーバへ送らないよう、Google Apps Scriptのドメインだけ許可
+  function isAllowedGasUrl(u){ try{ const x=new URL(u); return x.protocol==='https:' && x.hostname==='script.google.com'; }catch(e){ return false; } }
   // GAS呼び出し（CORSプリフライト回避のため text/plain でPOST）
   async function callGas(payload){
     if(!gasUrl)throw new Error('GAS URLが未設定です（管理者→連携設定で登録）');
+    if(!isAllowedGasUrl(gasUrl))throw new Error('GAS URLが不正です。https://script.google.com/ のURLのみ設定できます。');
     const res=await fetch(gasUrl,{ method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(payload) });
     const txt=await res.text();
     let data; try{ data=JSON.parse(txt); }catch(e){ throw new Error('GAS応答が不正：'+txt.slice(0,200)); }
@@ -525,6 +534,26 @@
   function saveCompanyTpl(){ try{ localStorage.setItem(TPL_COMPANY_KEY,JSON.stringify(companyTpl)); localStorage.setItem(TPL_VER_KEY,String(COMPANY_TPL_VERSION)); }catch(e){} }
   function savePersonalTpl(){ try{ localStorage.setItem(TPL_PERSONAL_KEY,JSON.stringify(personalTpl)); }catch(e){} }
   loadTemplates();
+
+  // ===== 共通ユーティリティ（コピー / カード差分更新 / 保存データ消去 / ストレージ可用性） =====
+  // クリップボード：セキュアコンテキスト外（file:// 等）でも動くようフォールバック付き
+  function copyText(text){
+    if(navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext){ return navigator.clipboard.writeText(text); }
+    return new Promise((resolve,reject)=>{ try{ const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.top='-1000px'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select(); const ok=document.execCommand('copy'); document.body.removeChild(ta); ok?resolve():reject(new Error('copy failed')); }catch(e){ reject(e); } });
+  }
+  // メールカードの件名・本文だけを再描画（編集パネルやフィードバック入力中の状態・フォーカスを保持）
+  function updateAllCardBodies(){
+    if(MODE_CONFIG[MODE].kind!=='mail'){ if(records.length)renderAll(); return; }
+    results.querySelectorAll('.result-card').forEach(card=>{ const idx=+card.dataset.idx; if(!records[idx])return; const m=renderMail(records[idx]); const sl=card.querySelector('.subject-line'); if(sl)sl.innerHTML='<span class="subj-key">件名：</span>'+escapeHtml(m.subject); const body=card.querySelector('.body'); if(body)body.textContent=m.body; });
+  }
+  // この端末の保存データを全消去（共有PC対策・個人情報の残留防止）
+  (function(){ const btn=$('clear-data-btn'); if(!btn)return; btn.addEventListener('click',()=>{
+    if(!confirm('この端末（ブラウザ）に保存した内容をすべて消去します。\n・報告者名／案件／署名／ひな形／連携設定\nよろしいですか？'))return;
+    try{ [STORAGE_KEY,PROJECTS_KEY,PROJECT_SELECTED_KEY,SIG_KEY,SIG_SELECTED_KEY,GAS_URL_KEY,WEBHOOKS_KEY,TPL_COMPANY_KEY,TPL_PERSONAL_KEY,TPL_VER_KEY,ADMIN_KEY].forEach(k=>localStorage.removeItem(k)); }catch(e){}
+    alert('保存データを消去しました。画面を再読み込みします。'); location.reload();
+  }); })();
+  // localStorageが使えない環境（プライベートモード等）を一度だけ知らせる
+  (function(){ let ok=true; try{ const tk='__ad_test__'; localStorage.setItem(tk,'1'); localStorage.removeItem(tk); }catch(e){ ok=false; } if(!ok){ const b=document.createElement('div'); b.textContent='⚠ この環境ではブラウザに設定を保存できません（プライベートモード等の可能性）。入力・設定は再読み込みで消えます。'; b.style.cssText='background:#faeeda;color:#854f0b;border:1px solid #f0d4a6;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;'; const c=document.querySelector('.container'); if(c)c.insertBefore(b,c.firstChild); } })();
 
   // 実際に使うひな形：個人カスタムがあれば優先、なければ会社標準
   function effectiveTemplate(mk,st){
@@ -643,9 +672,11 @@
     if(cell.length>0||row.length>0){row.push(cell);rows.push(row);}
     return rows.filter(r=>r.some(c=>(c||'').trim()!==''));
   }
-  function isDateCell(s){ const t=(s||'').trim(); if(!t)return false; if(/^\d{4}[\/\-年]\s?\d{1,2}[\/\-月]\s?\d{1,2}日?$/.test(t))return true; if(/^\d{1,2}[\/\-月]\s?\d{1,2}日?(?:\s?\([日月火水木金土]\))?$/.test(t))return true; return false; }
-  function isTimeCell(s){ const t=(s||'').trim(); if(!t)return false; return /^\d{1,2}[:時](\d{1,2})?(:\d{1,2})?分?半?$/.test(t); }
-  function isPhoneCell(s){ const t=(s||'').trim(); if(!t)return false; const d=t.replace(/[^\d]/g,''); if(d.length<10||d.length>11)return false; return RE.phoneLoose.test(t); }
+  // 全角英数記号を半角へ（判定・伏せ字化の取りこぼし対策）。全角スペース・半角/全角カナは対象外。
+  function zen2han(s){ return (s||'').replace(/[！-～]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)); }
+  function isDateCell(s){ const t=zen2han((s||'').trim()); if(!t)return false; if(/^\d{4}[\/\-年]\s?\d{1,2}[\/\-月]\s?\d{1,2}日?$/.test(t))return true; if(/^\d{1,2}[\/\-月]\s?\d{1,2}日?(?:\s?\([日月火水木金土]\))?$/.test(t))return true; return false; }
+  function isTimeCell(s){ const t=zen2han((s||'').trim()); if(!t)return false; return /^\d{1,2}[:時](\d{1,2})?(:\d{1,2})?分?半?$/.test(t); }
+  function isPhoneCell(s){ const t=zen2han((s||'').trim()); if(!t)return false; const d=t.replace(/[^\d]/g,''); if(d.length<10||d.length>11)return false; return RE.phoneLoose.test(t); }
   function isPriorityCell(s){ return /^(最優先|優先|通常|低|高|中|S|A|B|C)$/.test((s||'').trim()); }
   function detectMeetingType(text,fb){ if(!text)return fb; if(/オンライン|ＷＥＢ|web|zoom|teams|google\s*meet|meet\b/i.test(text))return 'オンライン'; if(/日程調整中|調整中|候補日|どちらか|いずれか/.test(text))return '日程調整中'; if(/訪問希望|来訪希望|来社希望|希望/.test(text))return '訪問希望'; if(/確定|決定|お時間|アポ獲得/.test(text))return '日程確定'; return fb; }
   // コメントから相手ステータス（visit/online/internal/followup/other）を推定
@@ -936,9 +967,11 @@
   function escapeHtml(s){ return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
   // 顧客データを機械的に伏せ字化（外部送信前にブラウザ内で実行）
+  // 注意：これは「保険」であり完全ではありません。送信前に必ずプレビューを目視確認してください。
   function redactCustomerData(text, r){
     if(!text)return '';
     let out=text;
+    r=r||{};
     // 置換は長い文字列から先に（部分一致の取りこぼし対策）
     const repl=[];
     if(r.facility){ // 「　」で連結された別拠点名も個別に
@@ -953,12 +986,14 @@
       const sei=base.split(/[ 　]/)[0]; if(sei&&sei.length>=2)repl.push([sei,'[担当者]']);
     }
     if(r.dept){ repl.push([r.dept,'[部署]']); }
+    if(r.address){ repl.push([r.address,'[住所]']); }
     if(r.phone){ repl.push([r.phone,'[電話番号]']); }
     if(r.mail){ repl.push([r.mail,'[メール]']); }
     // 長い順にソートして順次置換
     repl.sort((a,b)=>b[0].length-a[0].length);
     repl.forEach(([from,to])=>{ if(from && from.length>=2){ out=out.split(from).join(to); } });
-    // 電話番号・メールの取りこぼしをパターンでも伏せる
+    // 取りこぼし対策：全角→半角に正規化してからパターンでも伏せる（全角数字の電話・メール対策）
+    out=zen2han(out);
     out=out.replace(/[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}/g,'[メール]');
     out=out.replace(/\(?0\d{1,4}\)?[-(\s.]?\d{1,4}[-)\s.]?\d{3,4}/g,'[電話番号]');
     return out;
@@ -996,7 +1031,6 @@
         <div class="result-head">
           <div class="result-title">${idxLabel}<span>出力結果</span>${typeTag}${statusTag}${autoFlag}${customTag} ${warnHtml}</div>
           <div class="result-actions">
-            ${isMail?'<button class="card-ai">✨ AIで個別文</button>':''}
             ${isMail?'<button class="card-prompt" style="background:#6a4ca5;color:#fff;border-color:#6a4ca5;">📋 Claude用プロンプト</button>':''}
             <button class="card-copy primary">📋 ${isMail?'メール':'コピー'}</button>
             <button class="card-edit">✎ 修正</button>
@@ -1004,16 +1038,10 @@
           </div>
         </div>
         <div class="edit-panel">${editRows}</div>
-        ${isMail?`<div class="ai-msg-row" style="${(r.aiMsg&&r.aiMsg.trim())?'':'display:none;'}">
-          <label>AIが生成した個別メッセージ（送信前に必ず内容を確認・修正してください）</label>
-          <textarea class="ai-msg-edit" placeholder="架電メモから生成された1〜2文がここに入ります">${escapeHtml(r.aiMsg||'')}</textarea>
-          <div class="ai-hint">この文は本文中の <code>{個別メッセージ}</code> の位置に差し込まれます。テンプレートに <code>{個別メッセージ}</code> が無い場合は反映されません。</div>
-        </div>`:''}
         ${subjectHtml}
         <div class="body${isMail?' with-subject':''}">${escapeHtml(reportText)}</div>
         ${isMail?`<div class="slack-bar">
           <span style="font-size:11px;color:#5f5e5a;">Slackへ：</span>
-          <select class="slack-kind"><option value="progress">案件進捗・アポ報告</option><option value="bug">バグ報告</option><option value="idea">機能アイデア</option></select>
           <select class="slack-target">${webhooks.map(w=>`<option value="${escapeHtml(w.key)}">${escapeHtml(w.label||w.key)}</option>`).join('')}</select>
           <button class="slack-send ghost" style="border:1px solid #d3d1c7;">送信</button>
           <span class="slack-status" style="font-size:11px;"></span>
@@ -1021,7 +1049,7 @@
         <div class="fb-bar">
           <button class="fb-open">💬 このメールへのフィードバックを送る</button>
           <div class="fb-panel" style="display:none;">
-            <div class="fb-note">改善点・気づきを書いてSlackへ送ります。送信前に<b>顧客名・電話・メールは自動で伏せ字化</b>され、下のプレビューで確認できます（顧客データは保存しません）。</div>
+            <div class="fb-note">改善点・気づきを書いてSlackへ送ります。送信前に<b>顧客名・担当者・電話・メール・住所を自動で伏せ字化</b>します（入力したフィードバック文も対象）。自動処理は<b>保険</b>のため、<b>送信前に必ず下のプレビューを目視確認</b>してください。この送信で顧客データを保存・記録することはありません。</div>
             <label class="fb-label">フィードバック（例：訪問希望なのに文面が硬い／結びがくどい 等）</label>
             <textarea class="fb-text" placeholder="ここに改善点・気づきを書く"></textarea>
             <label class="fb-label">送信内容プレビュー（この内容がSlackに送られます）</label>
@@ -1057,7 +1085,7 @@
   function bindCardEvents(){
     results.querySelectorAll('.result-card').forEach(card=>{
       const idx=+card.dataset.idx;
-      card.querySelector('.card-copy').addEventListener('click',e=>{const btn=e.currentTarget; const txt=copyTextFor(idx); navigator.clipboard.writeText(txt).then(()=>{btn.classList.remove('primary');btn.classList.add('ok');btn.textContent='✓ コピー済';setTimeout(()=>{btn.classList.add('primary');btn.classList.remove('ok');btn.textContent='📋 コピー';},1500);});});
+      card.querySelector('.card-copy').addEventListener('click',e=>{const btn=e.currentTarget; const o=btn.textContent; const txt=copyTextFor(idx); copyText(txt).then(()=>{btn.classList.remove('primary');btn.classList.add('ok');btn.textContent='✓ コピー済';setTimeout(()=>{btn.classList.add('primary');btn.classList.remove('ok');btn.textContent=o;},1500);}).catch(()=>alert('コピーに失敗しました。本文を選択して手動でコピーしてください。'));});
       card.querySelector('.card-edit').addEventListener('click',()=>card.querySelector('.edit-panel').classList.toggle('open'));
       const rb=card.querySelector('.card-remove'); if(rb)rb.addEventListener('click',()=>{records.splice(idx,1);renderAll();});
       card.querySelectorAll('.field-edit').forEach(inp=>inp.addEventListener('input',()=>{records[idx][inp.dataset.key]=inp.value; const cfg=MODE_CONFIG[MODE]; if(cfg.kind==='mail'){const m=renderMail(records[idx]); const sl=card.querySelector('.subject-line'); if(sl)sl.innerHTML='<span class="subj-key">件名：</span>'+escapeHtml(m.subject); card.querySelector('.body').textContent=m.body;} else {card.querySelector('.body').textContent=renderReportText(records[idx]);}}));
@@ -1069,43 +1097,20 @@
 
       // Claude用プロンプトをコピー（API不要・会社のClaudeに貼る）
       const promptBtn=card.querySelector('.card-prompt');
-      if(promptBtn)promptBtn.addEventListener('click',e=>{ const btn=e.currentTarget; const txt=buildPrompt(records[idx]); navigator.clipboard.writeText(txt).then(()=>{ const o=btn.textContent; btn.textContent='✓ コピー済'; btn.style.background='#0f6e56'; btn.style.borderColor='#0f6e56'; setTimeout(()=>{btn.textContent=o; btn.style.background='#6a4ca5'; btn.style.borderColor='#6a4ca5';},1500); }); });
+      if(promptBtn)promptBtn.addEventListener('click',e=>{ const btn=e.currentTarget; const o=btn.textContent; const txt=buildPrompt(records[idx]); copyText(txt).then(()=>{ btn.textContent='✓ コピー済'; btn.style.background='#0f6e56'; btn.style.borderColor='#0f6e56'; setTimeout(()=>{btn.textContent=o; btn.style.background='#6a4ca5'; btn.style.borderColor='#6a4ca5';},1500); }).catch(()=>alert('コピーに失敗しました。')); });
 
-      // AIで個別文を生成
-      const aiBtn=card.querySelector('.card-ai');
-      if(aiBtn)aiBtn.addEventListener('click',async()=>{
-        const r=records[idx];
-        if(!gasUrl){ alert('GAS URLが未設定です。管理者モード→連携設定で登録してください。'); return; }
-        const orig=aiBtn.textContent; aiBtn.disabled=true; aiBtn.textContent='生成中…';
-        try{
-          const data=await callGas({
-            action:'generate',
-            memo: r.note||'',
-            statusLabel: STATUS_LABEL[(r.status||currentStatus)]||(r.status||currentStatus),
-            mailType: MAILTYPE_LABEL[currentMailType]||currentMailType,
-            serviceName: (currentMailType==='meeting'?$('m-service-name').value:$('d-service-name').value).trim(),
-            company: r.facility||''
-          });
-          r.aiMsg=(data.text||'').trim();
-          renderAll();
-        }catch(e){ alert('AI生成に失敗：'+e.message); }
-        finally{ aiBtn.disabled=false; aiBtn.textContent=orig; }
-      });
-      // AI生成文の手直し
-      const aiEdit=card.querySelector('.ai-msg-edit');
-      if(aiEdit)aiEdit.addEventListener('input',()=>{ records[idx].aiMsg=aiEdit.value; const m=renderMail(records[idx]); const sl=card.querySelector('.subject-line'); if(sl)sl.innerHTML='<span class="subj-key">件名：</span>'+escapeHtml(m.subject); card.querySelector('.body').textContent=m.body; });
+      // （旧「✨ AIで個別文」＝架電メモの外部送信は廃止。仕上げは「Claude用プロンプト」を社内Claudeに貼る方式）
 
       // Slackへ送信（メールカード）
       const slackBtn=card.querySelector('.slack-send');
       if(slackBtn)slackBtn.addEventListener('click',async()=>{
         if(!gasUrl){ alert('GAS URLが未設定です。管理者モード→連携設定で登録してください。'); return; }
-        const kind=card.querySelector('.slack-kind').value;
         const target=card.querySelector('.slack-target').value;
         const statusEl=card.querySelector('.slack-status');
         const msg=copyTextFor(idx);
         const orig=slackBtn.textContent; slackBtn.disabled=true; slackBtn.textContent='送信中…';
         statusEl.textContent='';
-        try{ await callGas({ action:'slack', webhookKey:target, kind:kind, message:msg, sender:(reporter.value||'').trim() }); statusEl.textContent='✓ 送信しました'; statusEl.style.color='#0f6e56'; }
+        try{ await callGas({ action:'slack', webhookKey:target, kind:'progress', message:msg, sender:(reporter.value||'').trim() }); statusEl.textContent='✓ 送信しました'; statusEl.style.color='#0f6e56'; }
         catch(e){ statusEl.textContent='✗ '+e.message; statusEl.style.color='#a55b5b'; }
         finally{ slackBtn.disabled=false; slackBtn.textContent=orig; }
       });
@@ -1124,7 +1129,7 @@
         // 伏せ字化した本文＋件名
         const redactedSubject=redactCustomerData(mail.subject,r);
         const redactedBody=redactCustomerData(mail.body,r);
-        const fb=(fbText.value||'').trim();
+        const fb=redactCustomerData((fbText.value||'').trim(), r);
         const statusLabel=STATUS_LABEL[(r.status||currentStatus)]||(r.status||currentStatus);
         const typeLabel=MAILTYPE_LABEL[currentMailType]||currentMailType;
         const parts=[
@@ -1168,13 +1173,13 @@
     if(records.length>0){const f=results.querySelector('.result-card');if(f)f.scrollIntoView({behavior:'smooth',block:'start'});}
   }
 
-  ['m-dept','m-datetime','m-link','m-content','m-service-name','m-service-url','d-docs','d-service-name','d-service-url','d-nextstep'].forEach(id=>{const el=$(id); if(el)el.addEventListener('input',()=>{if(records.length)renderAll();});});
+  ['m-dept','m-datetime','m-link','m-content','m-service-name','m-service-url','d-docs','d-service-name','d-service-url','d-nextstep'].forEach(id=>{const el=$(id); if(el)el.addEventListener('input',()=>{if(records.length)updateAllCardBodies();});});
 
   parseBtn.addEventListener('click',doParse);
   input.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();doParse();}if(e.key==='Escape'){input.value='';records=[];renderAll();autoResize();}});
   function autoResize(){input.style.height='auto';input.style.height=Math.min(Math.max(input.scrollHeight+4,130),400)+'px';}
   input.addEventListener('input',autoResize);
-  copyAllBtn.addEventListener('click',()=>{if(!records.length)return;const all=records.map((r,i)=>copyTextFor(i)).join('\n\n---\n\n');navigator.clipboard.writeText(all).then(()=>{copyAllBtn.classList.add('ok');copyAllBtn.textContent='✓ コピー済';setTimeout(()=>{copyAllBtn.classList.remove('ok');copyAllBtn.textContent='📋 全件コピー';},1500);});});
+  copyAllBtn.addEventListener('click',()=>{if(!records.length)return;const all=records.map((r,i)=>copyTextFor(i)).join('\n\n---\n\n');copyText(all).then(()=>{copyAllBtn.classList.add('ok');copyAllBtn.textContent='✓ コピー済';setTimeout(()=>{copyAllBtn.classList.remove('ok');copyAllBtn.textContent='📋 全件コピー';},1500);}).catch(()=>alert('コピーに失敗しました。'));});
 
   const SAMPLES={
     apo:'\t\t株式会社サンプル\tサンプル施設\t000-0000-0000\t担当A\t2026/04/02\t15:28:01\tアポ獲得\t"本日休み、来週火水木出勤\n\n5/12 訪問希望　大体14:30以降希望"\t1/28\t9:44\t不在\t別拠点に担当いる000-0000-0001\t',
