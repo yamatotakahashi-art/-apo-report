@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "apo-report-webapp",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2024-12-30",
+  // Auth.js / Neon が依存するNode APIのために必須
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  }
+}

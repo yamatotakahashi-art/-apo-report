@@ -1,4 +1,4 @@
-import { sql } from "./db";
+import { getSql } from "./db";
 import defaults from "./defaultTemplates.json";
 
 export type MailType = "meeting" | "doc";
@@ -11,6 +11,7 @@ const DEFAULTS = defaults as TemplateMap;
 export async function getAllTemplates(): Promise<TemplateMap> {
   const out: TemplateMap = {};
   try {
+    const sql = getSql();
     const rows = (await sql`
       select mail_type, status, subject, body from templates
     `) as { mail_type: string; status: string; subject: string; body: string }[];
@@ -36,6 +37,7 @@ export async function upsertTemplate(
   body: string,
   editor: string
 ) {
+  const sql = getSql();
   await sql`
     insert into templates (mail_type, status, subject, body, updated_by, updated_at)
     values (${mailType}, ${status}, ${subject}, ${body}, ${editor}, now())

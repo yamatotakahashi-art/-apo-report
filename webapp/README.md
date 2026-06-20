@@ -26,7 +26,12 @@ webapp/
   lib/defaultTemplates.json       ← 会社標準の初期値（既存アプリから抽出）
   db/schema.sql / db/seed.mjs     ← テーブル作成＋初期投入
   public/legacy/index.html        ← 既存アプリ（SERVER_MODEでAPI連携）
+  open-next.config.ts             ← Cloudflare(OpenNext)アダプタ設定
+  wrangler.jsonc                  ← Cloudflare Workers 設定（nodejs_compat等）
 ```
+
+**ホスティング**：Cloudflare Workers（OpenNext アダプタ `@opennextjs/cloudflare`）。無料枠で商用利用OK。
+DB＝Neon、認証＝Google はホスティングに依らず共通なので、必要なら他社へも移せます。
 
 ## セットアップ手順
 
@@ -35,24 +40,43 @@ webapp/
 - **Google Cloud**：OAuth クライアントID（種別：Webアプリ）を作成
   - 承認済みリダイレクトURI：
     - `http://localhost:3000/api/auth/callback/google`
-    - `https://<本番ドメイン>/api/auth/callback/google`
+    - `https://<本番ワーカーのURL>/api/auth/callback/google`（例 `https://apo-report-webapp.<account>.workers.dev/...`。デプロイ後に確定）
   - → `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET`
 - `AUTH_SECRET`：`openssl rand -base64 33` で生成
 
-### 2. ローカル起動
+### 2. テーブル作成（Neon）
+NeonのSQL Editorで `db/schema.sql` を実行（`users` と `templates` を作成）。
+※ テンプレの初期投入は任意（未投入でも同梱デフォルトを表示し、staffが編集した時にDB保存される）。
+ローカルで一括投入したい場合のみ：`cp .env.example .env.local && npm install && npm run db:setup`。
+
+### 3. Cloudflare Workers へデプロイ（OpenNext）
+
+**A. ダッシュボード連携（おすすめ・push毎に自動デプロイ）**
+1. https://dash.cloudflare.com → Workers & Pages → **Create** → **Import a repository**（Workers側）→ GitHub連携 → このリポジトリを選択
+2. ビルド設定：
+   - **Root directory**：`webapp`
+   - **Build command**：`npx opennextjs-cloudflare build`
+   - **Deploy command**：`npx wrangler deploy`
+3. **Variables and Secrets** に環境変数を登録（`DATABASE_URL` / `AUTH_SECRET` / `AUTH_GOOGLE_SECRET` は “Secret/暗号化” で、残りは通常変数で）：
+   `AUTH_SECRET` `AUTH_GOOGLE_ID` `AUTH_GOOGLE_SECRET` `DATABASE_URL` `ALLOWED_EMAIL_DOMAINS` `ADMIN_EMAILS`（任意で `GAS_URL` `SLACK_WEBHOOKS`）
+4. デプロイ → 本番URL（例 `https://apo-report-webapp.<account>.workers.dev`）を確認
+5. Google OAuthの「承認済みリダイレクトURI」に `https://<本番URL>/api/auth/callback/google` を追加
+
+**B. CLI（手元から1回で出す）**
 ```bash
 cd webapp
-cp .env.example .env.local   # 値を埋める（ALLOWED_EMAIL_DOMAINS と ADMIN_EMAILS は必須級）
 npm install
-npm run db:setup             # テーブル作成＋テンプレ初期投入＋ADMIN_EMAILSをstaff登録
-npm run dev                  # http://localhost:3000
+npx wrangler login           # ブラウザでCloudflareにログイン
+# 秘密情報を登録（対話で値を貼る）
+npx wrangler secret put DATABASE_URL
+npx wrangler secret put AUTH_SECRET
+npx wrangler secret put AUTH_GOOGLE_SECRET
+# 通常変数はダッシュボード、または wrangler.jsonc の [vars] に
+npm run deploy               # opennextjs-cloudflare build && deploy
 ```
 
-### 3. Vercel へデプロイ
-1. このGitHubリポジトリをVercelにインポート
-2. **Root Directory を `webapp` に設定**（直下の静的HTMLとは別物として配信）
-3. Environment Variables に `.env.local` と同じ値を登録（`DATABASE_URL` は Neon の本番用）
-4. デプロイ後、Google OAuth のリダイレクトURIに本番ドメインを追加
+`nodejs_compat` と互換日付は `wrangler.jsonc` に入っているので自動適用されます。
+ローカル動作確認は `npm run dev`（通常のNext）または `npm run preview`（Cloudflare相当で確認）。
 
 ## 役割（権限）の運用
 - 初回ログイン時に `users` に登録され、`ADMIN_EMAILS` に含まれるメールは `staff`、それ以外は `intern`。

@@ -3,6 +3,8 @@ import Google from "next-auth/providers/google";
 
 // Edge（middleware）でも読める軽量設定。DBやNode専用APIは入れない。
 export const authConfig = {
+  // Cloudflare等のVercel以外でも自分のホストを信頼する
+  trustHost: true,
   providers: [Google],
   pages: { signIn: "/signin" },
   callbacks: {

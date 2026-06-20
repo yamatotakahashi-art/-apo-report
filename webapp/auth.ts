@@ -1,12 +1,9 @@
 import NextAuth from "next-auth";
 import { authConfig } from "./auth.config";
-import { sql } from "./lib/db";
+import { getSql } from "./lib/db";
 
 const list = (v?: string) =>
   (v || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
-
-const allowedDomains = list(process.env.ALLOWED_EMAIL_DOMAINS);
-const adminEmails = list(process.env.ADMIN_EMAILS);
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -14,11 +11,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     ...authConfig.callbacks,
 
-    // 社内ドメイン＆メール検証済みのみ許可
+    // 社内ドメイン＆メール検証済みのみ許可（環境変数はリクエスト時に読む）
     async signIn({ profile, user }) {
       const email = (profile?.email || user?.email || "").toLowerCase();
       if (!email) return false;
       if (profile && profile.email_verified === false) return false;
+      const allowedDomains = list(process.env.ALLOWED_EMAIL_DOMAINS);
       if (allowedDomains.length) {
         const domain = email.split("@")[1] || "";
         if (!allowedDomains.includes(domain)) return false;
@@ -27,13 +25,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
 
     // 初回サインイン時のみ users を upsert し、role をトークンへ焼き込む。
-    // 以降のリクエスト（middleware含む）は user 無しなのでDBに触れない。
     async jwt({ token, user, profile }) {
       if (user) {
         const email = (user.email || (token.email as string) || "").toLowerCase();
         const name = user.name || (profile?.name as string) || "";
+        const adminEmails = list(process.env.ADMIN_EMAILS);
         const seedRole = adminEmails.includes(email) ? "staff" : "intern";
         try {
+          const sql = getSql();
           const rows = (await sql`
             insert into users (email, name, role)
             values (${email}, ${name}, ${seedRole})
