@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Noto Sans JP', system-ui, sans-serif; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: #c8ccd4; border-radius: 8px; }
+</style>
+</helmet>
+
+<div style="display:flex; min-height:100vh; background:#f4f5f7; color:#1b2236;">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside style="width:224px; flex:none; background:#1b2236; color:#cdd2de; display:flex; flex-direction:column; position:sticky; top:0; height:100vh;">
+    <div style="display:flex; align-items:center; gap:12px; padding:20px 18px;">
+      <div style="width:40px; height:40px; flex:none; border-radius:10px; background:#5558e0; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px;">A</div>
+      <div>
+        <div style="color:#fff; font-weight:700; font-size:16px; line-height:1.2;">AlphaDrive</div>
+        <div style="font-size:12px; color:#8a90a4;">営業報告</div>
+      </div>
+    </div>
+
+    <nav style="display:flex; flex-direction:column; gap:4px; padding:6px 12px;">
+      <button onClick="{{ goReport }}" style="{{ navReport }}">📮&nbsp;&nbsp;報告</button>
+      <button onClick="{{ goProjects }}" style="{{ navProjects }}">📁&nbsp;&nbsp;案件</button>
+      <button onClick="{{ goHistory }}" style="{{ navHistory }}">📋&nbsp;&nbsp;履歴</button>
+      <button onClick="{{ goSettings }}" style="{{ navSettings }}">⚙️&nbsp;&nbsp;設定</button>
+    </nav>
+
+    <div style="margin-top:auto; display:flex; align-items:center; gap:12px; padding:18px; border-top:1px solid #2a3147;">
+      <div style="width:36px; height:36px; flex:none; border-radius:50%; background:#5558e0; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px;">山</div>
+      <div>
+        <div style="color:#fff; font-size:14px; font-weight:500;">山田 太郎</div>
+        <div style="font-size:12px; color:#8a90a4;">admin</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main style="flex:1; min-width:0; display:flex; flex-direction:column;">
+
+    <!-- ===================== REPORT SCREEN ===================== -->
+    <sc-if value="{{ isReport }}" hint-placeholder-val="{{ true }}">
+    <div data-screen-label="報告">
+      <header style="display:flex; align-items:center; justify-content:space-between; padding:22px 32px; background:#fff; border-bottom:1px solid #e6e8ec;">
+        <h1 style="margin:0; font-size:20px; font-weight:700;">新規報告</h1>
+        <div style="display:flex; align-items:center; gap:8px; font-size:14px; color:#16a34a; font-weight:500;">
+          <span style="width:8px; height:8px; border-radius:50%; background:#16a34a;"></span>Gmail 連携済み
+        </div>
+      </header>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0;">
+        <!-- LEFT: FORM -->
+        <div style="padding:28px 32px; border-right:1px solid #e6e8ec;">
+          <label style="display:block; font-size:13px; color:#6b7280; margin-bottom:8px;">案件</label>
+          <div style="position:relative; margin-bottom:24px;">
+            <select style="width:100%; appearance:none; padding:13px 16px; border:1px solid #d7dae1; border-radius:8px; background:#fff; font-size:15px; font-family:inherit; color:#1b2236;">
+              <option>AD研修サービス</option>
+              <option>FC加盟店候補（給食）</option>
+              <option>院内売店リード</option>
+            </select>
+            <span style="position:absolute; right:14px; top:50%; transform:translateY(-50%); color:#9aa0ac; pointer-events:none;">▾</span>
+          </div>
+
+          <label style="display:block; font-size:13px; color:#6b7280; margin-bottom:8px;">Sheet 行をペースト</label>
+          <textarea style="width:100%; height:78px; padding:12px 14px; border:1px solid #d7dae1; border-radius:8px; font-size:14px; font-family:inherit; resize:none; line-height:1.6; color:#1b2236;">株式会社○○商事  03-1234-5678  〒150-0001 東京都渋谷区神宮前1-1-1  https://example.co.jp  田中部長  tanaka@example.co.jp</textarea>
+
+          <div style="margin:12px 0 26px; display:flex; gap:8px; align-items:flex-start; padding:12px 14px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; font-size:13px; color:#15803d; line-height:1.6;">
+            <span style="flex:none;">✓</span>
+            <div>自動検出: <b>株式会社○○商事</b> ／ 03-1234-5678 ／ 〒150-0001 東京都渋谷区… ／ tanaka@example.co.jp</div>
+          </div>
+
+          <label style="display:block; font-size:13px; color:#6b7280; margin-bottom:8px;">outcome</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:10px;">
+            <button onClick="{{ pickAppo }}" style="{{ appoBtn }}">⭐ アポ獲得</button>
+            <button onClick="{{ pickMaterial }}" style="{{ materialBtn }}">📨 資料請求</button>
+          </div>
+          <p style="margin:0 0 26px; font-size:12px; color:#9aa0ac; line-height:1.6;">apo-report は <b style="color:#6b7280;">アポ獲得 / 資料請求</b> のみ扱います。不在・受付NG 等の集計は teleapo で。</p>
+
+          <!-- material fields -->
+          <sc-if value="{{ isMaterial }}" hint-placeholder-val="{{ true }}">
+          <div style="border-top:1px solid #eef0f3; padding-top:22px;">
+            <div style="font-size:14px; font-weight:700; color:#5b5fc7; margin-bottom:18px;">追加項目（資料請求）</div>
+
+            <label style="display:block; font-size:13px; color:#6b7280; margin-bottom:8px;">宛先メール <span style="color:#e0567a;">*</span></label>
+            <input value="tanaka@example.co.jp" style="width:100%; padding:12px 14px; border:1px solid #d7dae1; border-radius:8px; font-size:15px; font-family:inherit; margin-bottom:18px;" />
+
+            <label style="display:block; font-size:13px; color:#6b7280; margin-bottom:8px;">宛名・事業部</label>
+            <input value="営業部 部長 田中様" style="width:100%; padding:12px 14px; border:1px solid #d7dae1; border-radius:8px; font-size:15px; font-family:inherit; margin-bottom:18px;" />
+
+            <label style="display:block; font-size:13px; color:#6b7280; margin-bottom:8px;">送付資料</label>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:18px;">
+              <span style="display:inline-flex; align-items:center; gap:6px; padding:7px 12px; background:#eef0fb; border:1px solid #d5d9f5; border-radius:7px; font-size:13px; color:#4b4fc4;">📎 AD研修_概要.pdf <span style="cursor:pointer; color:#9aa0ac;">✕</span></span>
+              <button style="background:none; border:none; color:#5558e0; font-size:13px; font-family:inherit; cursor:pointer;">+ 追加</button>
+            </div>
+
+            <label style="display:block; font-size:13px; color:#6b7280; margin-bottom:8px;">次回連絡打診</label>
+            <input value="来週月曜の午前中にお電話差し上げます" style="width:100%; padding:12px 14px; border:1px solid #d7dae1; border-radius:8px; font-size:15px; font-family:inherit; margin-bottom:8px;" />
+          </div>
+          </sc-if>
+
+          <!-- appointment fields -->
+          <sc-if value="{{ isAppo }}" hint-placeholder-val="{{ false }}">
+          <div style="border-top:1px solid #eef0f3; padding-top:22px;">
+            <div style="font-size:14px; font-weight:700; color:#5b5fc7; margin-bottom:18px;">追加項目（アポ獲得）</div>
+            <label style="display:block; font-size:13px; color:#6b7280; margin-bottom:8px;">宛先メール</label>
+            <input value="tanaka@example.co.jp" style="width:100%; padding:12px 14px; border:1px solid #d7dae1; border-radius:8px; font-size:15px; font-family:inherit; margin-bottom:18px;" />
+            <label style="display:block; font-size:13px; color:#6b7280; margin-bottom:8px;">面談日時</label>
+            <input value="2026-07-01 14:00" style="width:100%; padding:12px 14px; border:1px solid #d7dae1; border-radius:8px; font-size:15px; font-family:inherit; margin-bottom:18px;" />
+            <label style="display:block; font-size:13px; color:#6b7280; margin-bottom:8px;">面談リンク</label>
+            <input value="https://meet.google.com/abc-defg-hij" style="width:100%; padding:12px 14px; border:1px solid #d7dae1; border-radius:8px; font-size:15px; font-family:inherit; margin-bottom:18px;" />
+            <label style="display:block; font-size:13px; color:#6b7280; margin-bottom:8px;">次回連絡打診</label>
+            <input value="前日にリマインドをお送りします" style="width:100%; padding:12px 14px; border:1px solid #d7dae1; border-radius:8px; font-size:15px; font-family:inherit; margin-bottom:8px;" />
+          </div>
+          </sc-if>
+
+          <div style="display:flex; gap:12px; margin-top:26px;">
+            <button onClick="{{ send }}" style="padding:12px 22px; background:#5558e0; color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer;">📮 送信</button>
+            <button style="padding:12px 22px; background:#fff; color:#6b7280; border:1px solid #d7dae1; border-radius:8px; font-size:15px; font-family:inherit; cursor:pointer;">✎ クリア</button>
+          </div>
+        </div>
+
+        <!-- RIGHT: PREVIEW -->
+        <div style="padding:28px 32px; position:relative;">
+          <div style="font-size:13px; color:#6b7280; margin-bottom:16px;">プレビュー</div>
+
+          <!-- slack preview -->
+          <div style="border:1px solid #e6e8ec; border-radius:10px; background:#fff; margin-bottom:18px; overflow:hidden;">
+            <div style="display:flex; align-items:center; gap:8px; padding:11px 16px; border-bottom:1px solid #eef0f3; color:#6b7280; font-size:14px;"><span style="color:#9aa0ac;">#</span> #sales-ad-research</div>
+            <div style="display:flex; gap:12px; padding:16px;">
+              <div style="width:36px; height:36px; flex:none; border-radius:8px; background:#5558e0; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700;">A</div>
+              <div style="font-size:14px; line-height:1.7;">
+                <div style="margin-bottom:6px;"><b>apo-report bot</b> <span style="color:#9aa0ac; font-size:12px;">10:32</span></div>
+                <div style="margin-bottom:6px;">📨 <b>資料請求（株式会社○○商事）</b></div>
+                <div style="margin-bottom:6px; color:#2563eb;">@山田太郎 @鈴木一郎</div>
+                <div>担当: 山田太郎<br>宛先: 営業部 部長 田中様<br>送付資料: AD研修_概要.pdf<br>次回連絡打診: 来週月曜の午前中にお電話差し上げます</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- gmail preview -->
+          <div style="border:1px solid #e6e8ec; border-radius:10px; background:#fff; overflow:hidden;">
+            <div style="display:flex; align-items:center; gap:8px; padding:11px 16px; border-bottom:1px solid #eef0f3; color:#6b7280; font-size:14px;">✉️ Gmail 下書き</div>
+            <div style="padding:16px 18px; font-size:14px; line-height:1.8;">
+              <div style="display:grid; grid-template-columns:48px 1fr; gap:4px 12px; color:#1b2236;">
+                <span style="color:#9aa0ac;">To</span><span>tanaka@example.co.jp</span>
+                <span style="color:#9aa0ac;">CC</span><span>manager@alphadrive.co.jp, backoffice@alphadrive.co.jp</span>
+                <span style="color:#9aa0ac;">件名</span><span>AD研修サービスのご案内 - 株式会社○○商事 様</span>
+              </div>
+              <div style="border-top:1px solid #eef0f3; margin:14px 0; padding-top:14px; color:#374151;">
+                営業部 部長 田中様<br><br>
+                お世話になっております。<br>株式会社AlphaDrive の山田太郎です。<br><br>
+                先ほどお電話いただいた件、AD研修サービスの資料を<br>添付にてお送りいたします。<br><br>
+                来週月曜の午前中にお電話差し上げます。<br>
+                <span style="color:#c8ccd4;">────────</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- success toast -->
+          <sc-if value="{{ showToast }}" hint-placeholder-val="{{ true }}">
+          <div style="position:absolute; left:28px; right:32px; bottom:18px; background:#fff; border:1px solid #d1d5db; border-radius:12px; box-shadow:0 12px 32px rgba(20,28,48,0.18); overflow:hidden;">
+            <div style="display:flex; align-items:center; gap:12px; padding:16px 18px;">
+              <span style="width:24px; height:24px; flex:none; border-radius:50%; background:#16a34a; color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px;">✓</span>
+              <div style="flex:1;">
+                <div style="font-weight:700; font-size:14px;">送信完了 — 株式会社○○商事</div>
+                <div style="font-size:12px; color:#8a909c; margin-top:2px;">Slack 投稿 + Gmail 下書き作成済み</div>
+              </div>
+              <div style="font-size:13px; color:#8a909c;">残り <b style="color:#1b2236;">47s</b></div>
+            </div>
+            <div style="display:flex; gap:10px; padding:0 18px 14px;">
+              <button style="flex:1; padding:11px; background:#2a1f47; color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:500; font-family:inherit; cursor:pointer;">Slack で見る ↗</button>
+              <button style="flex:1; padding:11px; background:#5558e0; color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:500; font-family:inherit; cursor:pointer;">Gmail 下書きを開く ↗</button>
+            </div>
+            <div style="padding:0 18px 14px;">
+              <button onClick="{{ dismissToast }}" style="width:100%; padding:11px; background:#fff; color:#dc2626; border:1px solid #f1c7cf; border-radius:8px; font-size:13px; font-family:inherit; cursor:pointer;">↶ 取消（60 秒以内）</button>
+            </div>
+            <div style="height:4px; background:#16a34a; width:78%;"></div>
+          </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ===================== PROJECTS LIST ===================== -->
+    <sc-if value="{{ isProjects }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="案件管理">
+      <header style="display:flex; align-items:center; justify-content:space-between; padding:22px 32px; background:#fff; border-bottom:1px solid #e6e8ec;">
+        <h1 style="margin:0; font-size:20px; font-weight:700;">案件管理</h1>
+        <button onClick="{{ goEdit }}" style="padding:10px 18px; background:#5558e0; color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer;">+ 新規案件</button>
+      </header>
+      <div style="padding:28px 32px;">
+        <div style="display:flex; gap:8px; margin-bottom:22px;">
+          <button style="padding:9px 18px; background:#1b2236; color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer;">アクティブ（3）</button>
+          <button style="padding:9px 18px; background:transparent; color:#6b7280; border:none; border-radius:8px; font-size:14px; font-family:inherit; cursor:pointer;">アーカイブ（2）</button>
+        </div>
+
+        <div style="background:#fff; border:1px solid #e6e8ec; border-radius:12px; overflow:hidden;">
+          <div style="display:grid; grid-template-columns:2.2fr 1.4fr 1fr 1.4fr 0.7fr; padding:14px 24px; font-size:13px; color:#9aa0ac; border-bottom:1px solid #eef0f3;">
+            <div>案件</div><div>SLACK チャンネル</div><div>メンバー</div><div>今月の報告</div><div></div>
+          </div>
+
+          <div onClick="{{ goEdit }}" style="display:grid; grid-template-columns:2.2fr 1.4fr 1fr 1.4fr 0.7fr; align-items:center; padding:18px 24px; border-bottom:1px solid #eef0f3; cursor:pointer;">
+            <div><div style="font-weight:700; font-size:15px;">AD研修サービス</div><div style="font-size:12px; color:#9aa0ac; margin-top:3px;">法人向け研修プログラム</div></div>
+            <div style="color:#2563eb; font-size:14px;">#sales-ad-research</div>
+            <div style="display:flex;"><span style="width:26px;height:26px;border-radius:50%;background:#5558e0;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;border:2px solid #fff;">山</span><span style="width:26px;height:26px;border-radius:50%;background:#16a34a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;border:2px solid #fff;margin-left:-8px;">鈴</span><span style="width:26px;height:26px;border-radius:50%;background:#f59e0b;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;border:2px solid #fff;margin-left:-8px;">高</span></div>
+            <div><b style="font-size:18px;">128</b> <span style="font-size:12px;color:#9aa0ac;">件</span> <span style="font-size:12px;color:#16a34a;">アポ12 ／ 資料18</span></div>
+            <div style="text-align:right; color:#5558e0; font-size:13px;">編集 →</div>
+          </div>
+
+          <div onClick="{{ goEdit }}" style="display:grid; grid-template-columns:2.2fr 1.4fr 1fr 1.4fr 0.7fr; align-items:center; padding:18px 24px; border-bottom:1px solid #eef0f3; cursor:pointer;">
+            <div><div style="font-weight:700; font-size:15px;">FC加盟店候補（給食）</div><div style="font-size:12px; color:#9aa0ac; margin-top:3px;">移動販売 FC 加盟店リクルート</div></div>
+            <div style="color:#2563eb; font-size:14px;">#sales-fc-kameten</div>
+            <div style="display:flex;"><span style="width:26px;height:26px;border-radius:50%;background:#5558e0;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;border:2px solid #fff;">山</span><span style="width:26px;height:26px;border-radius:50%;background:#ec4899;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;border:2px solid #fff;margin-left:-8px;">佐</span></div>
+            <div><b style="font-size:18px;">87</b> <span style="font-size:12px;color:#9aa0ac;">件</span> <span style="font-size:12px;color:#16a34a;">アポ4 ／ 資料9</span></div>
+            <div style="text-align:right; color:#5558e0; font-size:13px;">編集 →</div>
+          </div>
+
+          <div onClick="{{ goEdit }}" style="display:grid; grid-template-columns:2.2fr 1.4fr 1fr 1.4fr 0.7fr; align-items:center; padding:18px 24px; cursor:pointer;">
+            <div><div style="font-weight:700; font-size:15px;">院内売店リード</div><div style="font-size:12px; color:#9aa0ac; margin-top:3px;">病院内売店運営会社架電</div></div>
+            <div style="color:#2563eb; font-size:14px;">#sales-innai-baiten</div>
+            <div style="display:flex;"><span style="width:26px;height:26px;border-radius:50%;background:#5558e0;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;border:2px solid #fff;">山</span></div>
+            <div><b style="font-size:18px;">42</b> <span style="font-size:12px;color:#9aa0ac;">件</span> <span style="font-size:12px;color:#16a34a;">アポ2 ／ 資料5</span></div>
+            <div style="text-align:right; color:#5558e0; font-size:13px;">編集 →</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ===================== PROJECT EDIT ===================== -->
+    <sc-if value="{{ isEdit }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="案件編集">
+      <header style="display:flex; align-items:center; justify-content:space-between; padding:22px 32px; background:#fff; border-bottom:1px solid #e6e8ec;">
+        <div style="font-size:18px; font-weight:700;"><span onClick="{{ goProjects }}" style="color:#9aa0ac; cursor:pointer;">案件管理</span> <span style="color:#c8ccd4;">/</span> AD研修サービス</div>
+        <div style="display:flex; gap:10px;">
+          <button onClick="{{ goProjects }}" style="padding:9px 18px; background:#fff; color:#6b7280; border:1px solid #d7dae1; border-radius:8px; font-size:14px; font-family:inherit; cursor:pointer;">キャンセル</button>
+          <button style="padding:9px 22px; background:#5558e0; color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer;">保存</button>
+        </div>
+      </header>
+
+      <div style="background:#fff; border-bottom:1px solid #e6e8ec; padding:0 32px;">
+        <div style="display:flex; gap:28px;">
+          <button onClick="{{ tabBasic }}" style="{{ tBasic }}">基本</button>
+          <button onClick="{{ tabSlack }}" style="{{ tSlack }}">Slack</button>
+          <button onClick="{{ tabEmail }}" style="{{ tEmail }}">メールテンプレ</button>
+          <button onClick="{{ tabFiles }}" style="{{ tFiles }}">資料</button>
+          <button onClick="{{ tabMembers }}" style="{{ tMembers }}">メンバー</button>
+        </div>
+      </div>
+
+      <div style="padding:28px 32px;">
+        <!-- SLACK TAB -->
+        <sc-if value="{{ isSlackTab }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width:920px;">
+          <label style="display:block; font-size:13px; color:#6b7280; margin-bottom:8px;">投稿先チャンネル</label>
+          <div style="position:relative; width:340px; margin-bottom:24px;">
+            <select style="width:100%; appearance:none; padding:12px 16px; border:1px solid #d7dae1; border-radius:8px; background:#fff; font-size:14px; font-family:'Roboto Mono',monospace; color:#1b2236;"><option>#sales-ad-research</option></select>
+            <span style="position:absolute; right:14px; top:50%; transform:translateY(-50%); color:#9aa0ac; pointer-events:none;">▾</span>
+          </div>
+
+          <label style="display:block; font-size:13px; color:#6b7280; margin-bottom:8px;">メンション対象</label>
+          <div style="display:flex; gap:10px; align-items:center; padding:10px 12px; border:1px solid #d7dae1; border-radius:8px; margin-bottom:24px;">
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#eef0fb;border:1px solid #d5d9f5;border-radius:16px;font-size:13px;color:#4b4fc4;">@ 山田太郎 <span style="cursor:pointer;color:#9aa0ac;">✕</span></span>
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#eef0fb;border:1px solid #d5d9f5;border-radius:16px;font-size:13px;color:#4b4fc4;">@ 鈴木一郎 <span style="cursor:pointer;color:#9aa0ac;">✕</span></span>
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#eef0fb;border:1px solid #d5d9f5;border-radius:16px;font-size:13px;color:#4b4fc4;">@ 高橋やまと <span style="cursor:pointer;color:#9aa0ac;">✕</span></span>
+            <button style="background:none;border:none;color:#5558e0;font-size:13px;font-family:inherit;cursor:pointer;">+追加</button>
+          </div>
+
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+            <label style="font-size:13px; color:#6b7280;">投稿テンプレ（差し込みタグ対応）</label>
+            <div style="font-size:12px; color:#9aa0ac;">表示中: <span style="background:#1b2236;color:#fff;padding:3px 10px;border-radius:6px;">会社標準</span> <span style="padding:3px 10px;">個人</span></div>
+          </div>
+          <pre style="margin:0 0 22px; background:#1b1830; color:#e6e6f0; border-radius:10px; padding:18px 20px; font-family:'Roboto Mono',monospace; font-size:13px; line-height:1.8; white-space:pre-wrap;"><span style="color:#9d8cff;">{outcome_icon}</span> <span style="color:#9d8cff;">{outcome_label}</span> (<span style="color:#5dd6a0;">{company_name}</span>)
+<span style="color:#9d8cff;">{mentions}</span>
+担当: <span style="color:#5dd6a0;">{reporter_name}</span>
+<span style="color:#f0a868;">{#if material_request}</span>
+宛先: <span style="color:#5dd6a0;">{address}</span>
+送付資料: <span style="color:#5dd6a0;">{attachments}</span>
+<span style="color:#f0a868;">{/if}</span>
+<span style="color:#f0a868;">{#if appointment}</span>
+面談日時: <span style="color:#5dd6a0;">{meeting_at}</span>
+面談リンク: <span style="color:#5dd6a0;">{meeting_url}</span>
+<span style="color:#f0a868;">{/if}</span>
+次回連絡打診: <span style="color:#5dd6a0;">{next_contact}</span></pre>
+
+          <label style="display:block; font-size:13px; color:#6b7280; margin-bottom:10px;">利用可能タグ</label>
+          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:22px;">
+            <span style="padding:6px 12px;background:#f4f5f7;border:1px solid #e6e8ec;border-radius:7px;font-size:12px;font-family:'Roboto Mono',monospace;color:#6b7280;">{company_name}</span>
+            <span style="padding:6px 12px;background:#f4f5f7;border:1px solid #e6e8ec;border-radius:7px;font-size:12px;font-family:'Roboto Mono',monospace;color:#6b7280;">{reporter_name}</span>
+            <span style="padding:6px 12px;background:#f4f5f7;border:1px solid #e6e8ec;border-radius:7px;font-size:12px;font-family:'Roboto Mono',monospace;color:#6b7280;">{mentions}</span>
+            <span style="padding:6px 12px;background:#f4f5f7;border:1px solid #e6e8ec;border-radius:7px;font-size:12px;font-family:'Roboto Mono',monospace;color:#6b7280;">{outcome_label}</span>
+            <span style="padding:6px 12px;background:#f4f5f7;border:1px solid #e6e8ec;border-radius:7px;font-size:12px;font-family:'Roboto Mono',monospace;color:#6b7280;">{outcome_icon}</span>
+            <span style="padding:6px 12px;background:#f4f5f7;border:1px solid #e6e8ec;border-radius:7px;font-size:12px;font-family:'Roboto Mono',monospace;color:#6b7280;">{address}</span>
+            <span style="padding:6px 12px;background:#f4f5f7;border:1px solid #e6e8ec;border-radius:7px;font-size:12px;font-family:'Roboto Mono',monospace;color:#6b7280;">{recipient_name}</span>
+            <span style="padding:6px 12px;background:#f4f5f7;border:1px solid #e6e8ec;border-radius:7px;font-size:12px;font-family:'Roboto Mono',monospace;color:#6b7280;">{attachments}</span>
+            <span style="padding:6px 12px;background:#f4f5f7;border:1px solid #e6e8ec;border-radius:7px;font-size:12px;font-family:'Roboto Mono',monospace;color:#6b7280;">{meeting_at}</span>
+            <span style="padding:6px 12px;background:#f4f5f7;border:1px solid #e6e8ec;border-radius:7px;font-size:12px;font-family:'Roboto Mono',monospace;color:#6b7280;">{meeting_url}</span>
+            <span style="padding:6px 12px;background:#f4f5f7;border:1px solid #e6e8ec;border-radius:7px;font-size:12px;font-family:'Roboto Mono',monospace;color:#6b7280;">{next_contact}</span>
+            <span style="padding:6px 12px;background:#f4f5f7;border:1px solid #e6e8ec;border-radius:7px;font-size:12px;font-family:'Roboto Mono',monospace;color:#6b7280;">{service_name}</span>
+          </div>
+
+          <div style="padding:14px 16px; background:#f4f5f7; border-radius:8px; font-size:13px; color:#6b7280; margin-bottom:26px;">📋 apo-report は <b style="color:#1b2236;">アポ獲得 / 資料請求</b> の 2 種だけ報告対象。outcome ごとの ON/OFF 設定は不要。</div>
+
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+            <div style="font-size:14px; font-weight:700;">変更履歴（最新 3 件）</div>
+            <span style="color:#5558e0; font-size:13px; cursor:pointer;">すべて見る →</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <span style="width:32px;height:32px;border-radius:50%;background:#5558e0;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;">山</span>
+            <div style="font-size:13px;">山田 太郎 が Slack 投稿テンプレを編集<br><span style="color:#9aa0ac; font-family:'Roboto Mono',monospace; font-size:12px;">2026-06-22 14:08</span></div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- EMAIL TAB -->
+        <sc-if value="{{ isEmailTab }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width:920px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:22px;">
+            <div style="display:flex; gap:10px;">
+              <button style="padding:9px 16px; background:#5558e0; color:#fff; border:none; border-radius:18px; font-size:13px; font-weight:500; font-family:inherit; cursor:pointer;">📨 資料送付用</button>
+              <button style="padding:9px 16px; background:#fff; color:#6b7280; border:1px solid #d7dae1; border-radius:18px; font-size:13px; font-family:inherit; cursor:pointer;">⭐ アポお礼用</button>
+            </div>
+            <div style="font-size:12px; color:#9aa0ac;">表示中: <span style="background:#1b2236;color:#fff;padding:3px 10px;border-radius:6px;">会社標準</span> <span style="padding:3px 10px;">個人カスタム</span></div>
+          </div>
+
+          <label style="display:block; font-size:13px; color:#6b7280; margin-bottom:8px;">件名</label>
+          <input value="AD研修サービスのご案内 - {company_name} 様" style="width:100%; padding:12px 14px; border:1px solid #d7dae1; border-radius:8px; font-size:15px; font-family:inherit; margin-bottom:22px;" />
+
+          <label style="display:block; font-size:13px; color:#6b7280; margin-bottom:8px;">CC（案件単位で固定、複数可）</label>
+          <div style="display:flex; gap:10px; align-items:center; padding:10px 12px; border:1px solid #d7dae1; border-radius:8px; margin-bottom:6px;">
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:16px;font-size:13px;color:#b45309;">manager@alphadrive.co.jp <span style="cursor:pointer;color:#cbb48f;">✕</span></span>
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:16px;font-size:13px;color:#b45309;">backoffice@alphadrive.co.jp <span style="cursor:pointer;color:#cbb48f;">✕</span></span>
+            <button style="background:none;border:none;color:#5558e0;font-size:13px;font-family:inherit;cursor:pointer;">+追加</button>
+          </div>
+          <p style="margin:0 0 22px; font-size:12px; color:#9aa0ac;">この案件で資料送付 / アポお礼メール下書きを作るとき、ここに登録したアドレスが自動で CC に入ります。</p>
+
+          <label style="display:block; font-size:13px; color:#6b7280; margin-bottom:8px;">本文</label>
+          <div style="border:1px solid #d7dae1; border-radius:8px; overflow:hidden;">
+            <div style="display:flex; gap:14px; padding:11px 14px; border-bottom:1px solid #eef0f3; font-size:13px; color:#6b7280;"><b>B</b> <i>I</i> <span>・</span> 1. リスト <span>・</span> <span style="color:#5558e0;">差し込みタグ</span></div>
+            <div style="padding:18px; font-size:14px; line-height:2; color:#374151;">
+              <span style="background:#fff7ed;color:#b45309;font-family:'Roboto Mono',monospace;font-size:13px;padding:1px 4px;border-radius:4px;">{address}</span><br>
+              <span style="background:#fff7ed;color:#b45309;font-family:'Roboto Mono',monospace;font-size:13px;padding:1px 4px;border-radius:4px;">{recipient_name}</span> 様<br><br>
+              お世話になっております。<br>
+              株式会社AlphaDrive の <span style="background:#fff7ed;color:#b45309;font-family:'Roboto Mono',monospace;font-size:13px;padding:1px 4px;border-radius:4px;">{reporter_name}</span> と申します。<br><br>
+              先ほどお電話いただきました件、<span style="background:#fff7ed;color:#b45309;font-family:'Roboto Mono',monospace;font-size:13px;padding:1px 4px;border-radius:4px;">{service_name}</span> の資料を<br>添付にてお送りいたします。<br><br>
+              サービス詳細はこちらをご覧ください。<br>
+              <span style="background:#fff7ed;color:#b45309;font-family:'Roboto Mono',monospace;font-size:13px;padding:1px 4px;border-radius:4px;">{service_url}</span><br><br>
+              <span style="background:#fff7ed;color:#b45309;font-family:'Roboto Mono',monospace;font-size:13px;padding:1px 4px;border-radius:4px;">{next_contact}</span><br><br>
+              ご不明な点がございましたら、いつでもお問い合わせください。<br>今後ともよろしくお願いいたします。<br><br>
+              <span style="background:#fff7ed;color:#b45309;font-family:'Roboto Mono',monospace;font-size:13px;padding:1px 4px;border-radius:4px;">{signature}</span>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- OTHER TABS (basic/files/members) -->
+        <sc-if value="{{ isStubTab }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width:920px; padding:60px; text-align:center; color:#9aa0ac; background:#fff; border:1px dashed #d7dae1; border-radius:12px; font-size:14px;">
+          {{ stubLabel }} タブの設定項目
+        </div>
+        </sc-if>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ===================== HISTORY ===================== -->
+    <sc-if value="{{ isHistory }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="履歴">
+      <header style="display:flex; align-items:center; justify-content:space-between; padding:22px 32px; background:#fff; border-bottom:1px solid #e6e8ec;">
+        <h1 style="margin:0; font-size:20px; font-weight:700;">報告履歴</h1>
+        <div style="display:flex; gap:8px; font-size:13px;">
+          <select style="appearance:none; padding:9px 32px 9px 14px; border:1px solid #d7dae1; border-radius:8px; background:#fff; font-family:inherit;"><option>今月</option><option>今週</option><option>今日</option></select>
+          <select style="appearance:none; padding:9px 32px 9px 14px; border:1px solid #d7dae1; border-radius:8px; background:#fff; font-family:inherit;"><option>全案件</option></select>
+        </div>
+      </header>
+      <div style="padding:28px 32px;">
+        <div style="background:#fff; border:1px solid #e6e8ec; border-radius:12px; overflow:hidden;">
+          <div style="display:grid; grid-template-columns:1.3fr 1.4fr 1.8fr 1fr 1.4fr; padding:14px 24px; font-size:13px; color:#9aa0ac; border-bottom:1px solid #eef0f3;">
+            <div>日時</div><div>案件</div><div>会社名</div><div>outcome</div><div>連携</div>
+          </div>
+          <sc-for list="{{ rows }}" as="r" hint-placeholder-count="5">
+          <div style="display:grid; grid-template-columns:1.3fr 1.4fr 1.8fr 1fr 1.4fr; align-items:center; padding:16px 24px; border-bottom:1px solid #eef0f3; font-size:14px;">
+            <div style="font-family:'Roboto Mono',monospace; font-size:12px; color:#6b7280;">{{ r.date }}</div>
+            <div>{{ r.project }}</div>
+            <div style="font-weight:500;">{{ r.company }}</div>
+            <div><span style="{{ r.badge }}">{{ r.outcome }}</span></div>
+            <div style="display:flex; gap:8px; font-size:12px;"><span style="color:#16a34a;">● Slack</span><span style="color:#16a34a;">● Gmail</span></div>
+          </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ===================== SETTINGS ===================== -->
+    <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="設定">
+      <header style="display:flex; align-items:center; padding:22px 32px; background:#fff; border-bottom:1px solid #e6e8ec;">
+        <h1 style="margin:0; font-size:20px; font-weight:700;">個人設定</h1>
+      </header>
+      <div style="padding:28px 32px; max-width:680px;">
+        <div style="background:#fff; border:1px solid #e6e8ec; border-radius:12px; padding:26px; margin-bottom:20px;">
+          <div style="font-size:15px; font-weight:700; margin-bottom:18px;">名乗り・署名</div>
+          <label style="display:block; font-size:13px; color:#6b7280; margin-bottom:8px;">表示名</label>
+          <input value="山田 太郎" style="width:100%; padding:12px 14px; border:1px solid #d7dae1; border-radius:8px; font-size:15px; font-family:inherit; margin-bottom:18px;" />
+          <label style="display:block; font-size:13px; color:#6b7280; margin-bottom:8px;">名乗り（メール冒頭）</label>
+          <input value="株式会社AlphaDrive の山田太郎です。" style="width:100%; padding:12px 14px; border:1px solid #d7dae1; border-radius:8px; font-size:15px; font-family:inherit; margin-bottom:18px;" />
+          <label style="display:block; font-size:13px; color:#6b7280; margin-bottom:8px;">署名</label>
+          <textarea style="width:100%; height:120px; padding:12px 14px; border:1px solid #d7dae1; border-radius:8px; font-size:14px; font-family:inherit; resize:none; line-height:1.7;">────────────────
+株式会社AlphaDrive
+山田 太郎 / 営業部
+yamada@alphadrive.co.jp
+────────────────</textarea>
+        </div>
+        <div style="background:#fff; border:1px solid #e6e8ec; border-radius:12px; padding:26px; display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <div style="font-size:15px; font-weight:700; margin-bottom:4px;">Gmail 連携</div>
+            <div style="font-size:13px; color:#16a34a;">● 連携済み（yamada@alphadrive.co.jp）</div>
+          </div>
+          <button style="padding:10px 18px; background:#fff; color:#6b7280; border:1px solid #d7dae1; border-radius:8px; font-size:14px; font-family:inherit; cursor:pointer;">再認証</button>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { screen: 'report', tab: 'slack', outcome: 'material_request', toast: true };
+
+  nav(key) {
+    const active = this.state.screen === key || (key === 'projects' && this.state.screen === 'edit');
+    return `display:flex; align-items:center; width:100%; text-align:left; padding:11px 14px; border:none; border-radius:8px; font-size:14px; font-family:inherit; cursor:pointer; ${active ? 'background:#5558e0; color:#fff; font-weight:500;' : 'background:transparent; color:#cdd2de;'}`;
+  }
+
+  tab(key) {
+    const active = this.state.tab === key;
+    return `padding:16px 0; border:none; background:none; font-size:14px; font-family:inherit; cursor:pointer; ${active ? 'color:#5558e0; font-weight:700; border-bottom:2px solid #5558e0;' : 'color:#6b7280; border-bottom:2px solid transparent;'}`;
+  }
+
+  outcomeBtn(key) {
+    const active = this.state.outcome === key;
+    return `padding:18px; border-radius:10px; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; ${active ? 'background:#5558e0; color:#fff; border:1px solid #5558e0;' : 'background:#fff; color:#374151; border:1px solid #d7dae1;'}`;
+  }
+
+  renderVals() {
+    const s = this.state;
+    const badge = (c, bg) => `padding:3px 10px; border-radius:14px; font-size:12px; font-weight:500; color:${c}; background:${bg};`;
+    return {
+      navReport: this.nav('report'), navProjects: this.nav('projects'),
+      navHistory: this.nav('history'), navSettings: this.nav('settings'),
+      goReport: () => this.setState({ screen: 'report' }),
+      goProjects: () => this.setState({ screen: 'projects' }),
+      goHistory: () => this.setState({ screen: 'history' }),
+      goSettings: () => this.setState({ screen: 'settings' }),
+      goEdit: () => this.setState({ screen: 'edit', tab: 'slack' }),
+
+      isReport: s.screen === 'report',
+      isProjects: s.screen === 'projects',
+      isEdit: s.screen === 'edit',
+      isHistory: s.screen === 'history',
+      isSettings: s.screen === 'settings',
+
+      tBasic: this.tab('basic'), tSlack: this.tab('slack'), tEmail: this.tab('email'),
+      tFiles: this.tab('files'), tMembers: this.tab('members'),
+      tabBasic: () => this.setState({ tab: 'basic' }), tabSlack: () => this.setState({ tab: 'slack' }),
+      tabEmail: () => this.setState({ tab: 'email' }), tabFiles: () => this.setState({ tab: 'files' }),
+      tabMembers: () => this.setState({ tab: 'members' }),
+      isSlackTab: s.tab === 'slack', isEmailTab: s.tab === 'email',
+      isStubTab: ['basic', 'files', 'members'].includes(s.tab),
+      stubLabel: { basic: '基本', files: '資料', members: 'メンバー' }[s.tab] || '',
+
+      isMaterial: s.outcome === 'material_request',
+      isAppo: s.outcome === 'appointment',
+      materialBtn: this.outcomeBtn('material_request'),
+      appoBtn: this.outcomeBtn('appointment'),
+      pickMaterial: () => this.setState({ outcome: 'material_request' }),
+      pickAppo: () => this.setState({ outcome: 'appointment' }),
+
+      showToast: s.toast,
+      send: () => this.setState({ toast: true }),
+      dismissToast: () => this.setState({ toast: false }),
+
+      rows: [
+        { date: '06-23 10:32', project: 'AD研修サービス', company: '株式会社○○商事', outcome: '資料請求', badge: badge('#4b4fc4', '#eef0fb') },
+        { date: '06-23 09:50', project: 'AD研修サービス', company: '丸和フーズ株式会社', outcome: 'アポ獲得', badge: badge('#b45309', '#fff7ed') },
+        { date: '06-22 16:14', project: 'FC加盟店候補（給食）', company: 'みなと給食センター', outcome: '資料請求', badge: badge('#4b4fc4', '#eef0fb') },
+        { date: '06-22 14:08', project: '院内売店リード', company: '株式会社ヘルスマート', outcome: 'アポ獲得', badge: badge('#b45309', '#fff7ed') },
+        { date: '06-22 11:30', project: 'AD研修サービス', company: '東日本産業株式会社', outcome: '資料請求', badge: badge('#4b4fc4', '#eef0fb') },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>
