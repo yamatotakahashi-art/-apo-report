@@ -7,5 +7,5 @@ import { authConfig } from "./auth.config";
 export default NextAuth(authConfig).auth;
 
 export const config = {
-  matcher: ["/", "/legacy/:path*"],
+  matcher: ["/", "/legacy/:path*", "/v2/:path*"],
 };
