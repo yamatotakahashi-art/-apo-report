@@ -15,8 +15,8 @@ import {
 } from "@/lib/report/engine";
 import { getTemplate } from "@/lib/report/templates";
 
-// ===== Phase 1：案件は固定サンプル（Phase 2 で Neon の案件設定に置き換え） =====
-interface SampleProject {
+// 案件（Neon の案件設定から取得）。報告画面はこの設定を読み込んで差し込む。
+interface Proj {
   id: string;
   name: string;
   channel: string;
@@ -26,21 +26,13 @@ interface SampleProject {
   meetingUrl: string;
   cc: string[];
   docs: string[];
+  tplMaterial: { subject: string; body: string };
+  tplAppo: { subject: string; body: string };
 }
-const PROJECTS: SampleProject[] = [
-  {
-    id: "sample",
-    name: "サンプル案件（AD研修）",
-    channel: "#sales-sample",
-    mentions: ["@山田", "@鈴木"],
-    serviceName: "AD研修サービス",
-    serviceUrl: "https://example.co.jp/ad",
-    meetingUrl: "https://meet.google.com/abc-defg-hij",
-    cc: ["manager@marchon.co.jp", "client@example.co.jp"],
-    docs: ["サービス概要.pdf", "料金表.pdf"],
-  },
-  { id: "none", name: "（メンションなし）", channel: "", mentions: [], serviceName: "", serviceUrl: "", meetingUrl: "", cc: [], docs: [] },
-];
+const EMPTY_PROJ: Proj = {
+  id: "", name: "（案件なし）", channel: "", mentions: [], serviceName: "", serviceUrl: "",
+  meetingUrl: "", cc: [], docs: [], tplMaterial: { subject: "", body: "" }, tplAppo: { subject: "", body: "" },
+};
 
 const NEXT_APPO = ["前日にリマインドをお送りします", "当日朝にご連絡いたします", "開催前にメールでご案内します"];
 const NEXT_DOC = ["お電話にてご状況を伺えればと存じます。", "来週中に改めてご連絡いたします。", "ご不明点があればご返信ください。"];
@@ -70,7 +62,7 @@ function buildSlack(
   rec: ParsedRecord,
   outcome: Outcome,
   status: Status,
-  project: SampleProject,
+  project: Proj,
   extra: { meetingAt: string; docs: string; nextContact: string },
 ): string {
   const heading = outcome === "material" ? "【資料請求報告】" : "【アポ獲得報告】";
@@ -113,7 +105,9 @@ function Badge({ kind }: { kind: "auto" | "pick" }) {
 
 export default function ReportScreen() {
   const [outcome, setOutcome] = useState<Outcome>("appointment");
-  const [projectId, setProjectId] = useState("sample");
+  const [projectsList, setProjectsList] = useState<{ id: string; name: string }[]>([]);
+  const [projectId, setProjectId] = useState("");
+  const [detail, setDetail] = useState<Proj | null>(null);
   const [text, setText] = useState("");
   const [records, setRecords] = useState<ParsedRecord[]>([]);
   const [idx, setIdx] = useState(0);
@@ -129,7 +123,7 @@ export default function ReportScreen() {
   const [copied, setCopied] = useState("");
   const [toast, setToast] = useState("");
 
-  const project = PROJECTS.find((p) => p.id === projectId) || PROJECTS[0];
+  const project = detail || EMPTY_PROJ;
   const mailType = outcomeToMailType(outcome);
   const rec = records[idx] as ParsedRecord | undefined;
   const status: Status = statusManual ?? ((rec?.status || "visit") as Status);
@@ -149,6 +143,51 @@ export default function ReportScreen() {
       localStorage.setItem(FORM_KEY, JSON.stringify({ sig }));
     } catch {}
   }, [sig]);
+
+  // 案件一覧（ドロップダウン用）
+  useEffect(() => {
+    fetch("/api/projects")
+      .then((r) => (r.ok ? r.json() : { projects: [] }))
+      .then((j) => {
+        const ps = (j.projects || []).map((p: any) => ({ id: p.id, name: p.name }));
+        setProjectsList(ps);
+        setProjectId((cur) => cur || (ps[0]?.id ?? ""));
+      })
+      .catch(() => {});
+  }, []);
+  // 選択案件の詳細（チャンネル/メンション/CC/テンプレ/資料/サービス/面談リンク）
+  useEffect(() => {
+    if (!projectId) {
+      setDetail(null);
+      return;
+    }
+    let live = true;
+    fetch(`/api/projects/${projectId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!live || !j?.project) return;
+        const p = j.project;
+        setDetail({
+          id: p.id,
+          name: p.name,
+          channel: p.slack_channel,
+          mentions: p.mentions || [],
+          serviceName: p.service_name || "",
+          serviceUrl: p.service_url || "",
+          meetingUrl: p.meeting_url || "",
+          cc: p.cc || [],
+          docs: p.docs || [],
+          tplMaterial: p.templates?.email_material || { subject: "", body: "" },
+          tplAppo: p.templates?.email_appo || { subject: "", body: "" },
+        });
+        setSelectedDocs([]);
+        setMeetingUrlOverride(null);
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [projectId]);
 
   function doParse() {
     const recs = parseInput(text, outcome);
@@ -185,8 +224,11 @@ export default function ReportScreen() {
 
   const mail = useMemo(() => {
     if (!rec) return null;
-    return renderMail(rec, mailType, status, getTemplate(mailType, status), form, sig);
-  }, [rec, mailType, status, form, sig]);
+    // 案件に専用テンプレがあればそれを使い、無ければ状況別の既定テンプレにフォールバック
+    const projTpl = outcome === "material" ? project.tplMaterial : project.tplAppo;
+    const template = projTpl.subject || projTpl.body ? projTpl : getTemplate(mailType, status);
+    return renderMail(rec, mailType, status, template, form, sig);
+  }, [rec, mailType, status, form, sig, project, outcome]);
 
   const slack = useMemo(
     () => (rec ? buildSlack(rec, outcome, status, project, { meetingAt, docs: selectedDocs.join("、"), nextContact }) : ""),
@@ -251,14 +293,11 @@ export default function ReportScreen() {
         <div style={{ position: "relative" }}>
           <select
             value={projectId}
-            onChange={(e) => {
-              setProjectId(e.target.value);
-              setSelectedDocs([]);
-              setMeetingUrlOverride(null);
-            }}
+            onChange={(e) => setProjectId(e.target.value)}
             style={{ ...input, width: "auto", paddingRight: 30, appearance: "none", cursor: "pointer", fontSize: 13 }}
           >
-            {PROJECTS.map((p) => (
+            {projectsList.length === 0 && <option value="">（案件なし）</option>}
+            {projectsList.map((p) => (
               <option key={p.id} value={p.id}>
                 案件: {p.name}
               </option>

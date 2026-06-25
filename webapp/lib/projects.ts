@@ -5,6 +5,9 @@ export interface Project {
   name: string;
   description: string;
   slack_channel: string;
+  service_name: string;
+  service_url: string;
+  meeting_url: string;
   archived: boolean;
   created_at: string;
   appo?: number;
@@ -15,6 +18,7 @@ export interface ProjectDetail extends Project {
   members: string[];
   cc: string[];
   mentions: string[];
+  docs: string[];
   templates: Record<TemplateKind, { subject: string; body: string }>;
 }
 
@@ -42,12 +46,16 @@ export async function listProjects(): Promise<Project[]> {
 
 export async function getProject(id: string): Promise<ProjectDetail | null> {
   const sql = getSql();
-  const prows = (await sql`select id, name, description, slack_channel, archived, created_at from projects where id = ${id}`) as any[];
+  const prows = (await sql`
+    select id, name, description, slack_channel, service_name, service_url, meeting_url, archived, created_at
+    from projects where id = ${id}
+  `) as any[];
   if (!prows.length) return null;
-  const [members, cc, mentions, tpls] = await Promise.all([
+  const [members, cc, mentions, docs, tpls] = await Promise.all([
     sql`select user_email from project_members where project_id = ${id} order by user_email` as Promise<any[]>,
     sql`select email from project_cc where project_id = ${id} order by email` as Promise<any[]>,
     sql`select mention from project_mentions where project_id = ${id} order by mention` as Promise<any[]>,
+    sql`select name from project_docs where project_id = ${id} order by name` as Promise<any[]>,
     sql`select kind, subject, body from project_templates where project_id = ${id}` as Promise<any[]>,
   ]);
   const templates = { ...EMPTY_TEMPLATES } as ProjectDetail["templates"];
@@ -58,6 +66,7 @@ export async function getProject(id: string): Promise<ProjectDetail | null> {
     members: members.map((m) => m.user_email),
     cc: cc.map((c) => c.email),
     mentions: mentions.map((m) => m.mention),
+    docs: docs.map((x) => x.name),
     templates,
   };
 }
@@ -71,14 +80,22 @@ export async function createProject(name: string, description: string, slackChan
 
 export async function updateProjectBasic(
   id: string,
-  d: { name: string; description: string; slack_channel: string; archived: boolean },
+  d: { name: string; description: string; slack_channel: string; service_name: string; service_url: string; meeting_url: string; archived: boolean },
 ) {
   const sql = getSql();
   await sql`
     update projects set name = ${d.name}, description = ${d.description},
-      slack_channel = ${d.slack_channel}, archived = ${d.archived}
+      slack_channel = ${d.slack_channel}, service_name = ${d.service_name},
+      service_url = ${d.service_url}, meeting_url = ${d.meeting_url}, archived = ${d.archived}
     where id = ${id}
   `;
+}
+
+export async function setDocs(id: string, names: string[]) {
+  const sql = getSql();
+  await sql`delete from project_docs where project_id = ${id}`;
+  const uniq = Array.from(new Set(names.map((n) => n.trim()).filter(Boolean)));
+  for (const n of uniq) await sql`insert into project_docs (project_id, name) values (${id}, ${n}) on conflict do nothing`;
 }
 
 // 置き換え型（全削除→再投入）。要素は少数想定なので逐次でOK。

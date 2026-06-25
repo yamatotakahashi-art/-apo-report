@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
-import { getProject, updateProjectBasic, setCc, setMentions, setMembers } from "@/lib/projects";
+import { getProject, updateProjectBasic, setCc, setMentions, setMembers, setDocs } from "@/lib/projects";
 
 // 詳細：ログイン済み全員
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -36,11 +36,15 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       name: String(body?.name ?? "").trim() || "(無題)",
       description: String(body?.description ?? ""),
       slack_channel: String(body?.slack_channel ?? ""),
+      service_name: String(body?.service_name ?? ""),
+      service_url: String(body?.service_url ?? ""),
+      meeting_url: String(body?.meeting_url ?? ""),
       archived: !!body?.archived,
     });
     await setCc(id, arr(body?.cc));
     await setMentions(id, arr(body?.mentions));
     await setMembers(id, arr(body?.members));
+    await setDocs(id, arr(body?.docs));
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("[projects] update failed:", e);

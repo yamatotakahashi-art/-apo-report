@@ -18,10 +18,14 @@ interface Detail {
   name: string;
   description: string;
   slack_channel: string;
+  service_name: string;
+  service_url: string;
+  meeting_url: string;
   archived: boolean;
   members: string[];
   cc: string[];
   mentions: string[];
+  docs: string[];
   templates: Record<Kind, { subject: string; body: string }>;
 }
 type Tab = "basic" | "slack" | "email" | "docs" | "members";
@@ -143,7 +147,7 @@ function ProjectEdit({ id, isStaff, onBack }: { id: string; isStaff: boolean; on
       const r1 = await fetch(`/api/projects/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: d.name, description: d.description, slack_channel: d.slack_channel, archived: d.archived, cc: d.cc, mentions: d.mentions, members: d.members }),
+        body: JSON.stringify({ name: d.name, description: d.description, slack_channel: d.slack_channel, service_name: d.service_name, service_url: d.service_url, meeting_url: d.meeting_url, archived: d.archived, cc: d.cc, mentions: d.mentions, members: d.members, docs: d.docs }),
       });
       if (!r1.ok) throw new Error();
       for (const k of ["slack", "email_material", "email_appo"] as Kind[]) {
@@ -200,6 +204,12 @@ function ProjectEdit({ id, isStaff, onBack }: { id: string; isStaff: boolean; on
             <input value={d.description} onChange={(e) => set({ description: e.target.value })} disabled={ro} style={{ ...input, marginBottom: 14 }} />
             <label style={label}>Slack チャンネル</label>
             <input value={d.slack_channel} onChange={(e) => set({ slack_channel: e.target.value })} disabled={ro} placeholder="#sales-xxxx" style={{ ...input, marginBottom: 14, fontFamily: T.mono }} />
+            <label style={label}>サービス名（報告メールの差し込み用）</label>
+            <input value={d.service_name} onChange={(e) => set({ service_name: e.target.value })} disabled={ro} placeholder="AD研修サービス" style={{ ...input, marginBottom: 14 }} />
+            <label style={label}>サービスURL</label>
+            <input value={d.service_url} onChange={(e) => set({ service_url: e.target.value })} disabled={ro} placeholder="https://…" style={{ ...input, marginBottom: 14, fontFamily: T.mono }} />
+            <label style={label}>面談リンク（アポ報告で自動入力）</label>
+            <input value={d.meeting_url} onChange={(e) => set({ meeting_url: e.target.value })} disabled={ro} placeholder="https://meet.google.com/…" style={{ ...input, marginBottom: 14, fontFamily: T.mono }} />
             <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: T.body, cursor: ro ? "default" : "pointer" }}>
               <input type="checkbox" checked={d.archived} onChange={(e) => set({ archived: e.target.checked })} disabled={ro} />
               アーカイブ（一覧の「アーカイブ」に移動）
@@ -233,10 +243,9 @@ function ProjectEdit({ id, isStaff, onBack }: { id: string; isStaff: boolean; on
         )}
 
         {tab === "docs" && (
-          <div style={{ ...card, color: T.muted, fontSize: 14, lineHeight: 1.8 }}>
-            送付資料の登録は次の更新で対応します（案件ごとの資料リスト→報告画面でチェック選択）。
-            <br />
-            それまでは報告画面で資料名を直接入力できます。
+          <div style={card}>
+            <label style={label}>送付資料リスト（1行に1つ）。報告画面の「資料請求」でチェック選択できます。</label>
+            {listEditor(d.docs, (a) => set({ docs: a }), "サービス概要.pdf\n料金表.pdf\n導入事例.pdf")}
           </div>
         )}
 
