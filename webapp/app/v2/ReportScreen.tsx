@@ -71,14 +71,12 @@ function buildSlack(
   outcome: Outcome,
   status: Status,
   project: SampleProject,
-  reporter: string,
   extra: { meetingAt: string; docs: string; nextContact: string },
 ): string {
   const heading = outcome === "material" ? "【資料請求報告】" : "【アポ獲得報告】";
   const L: string[] = [];
   if (project.mentions.length) L.push(project.mentions.join(" "));
   L.push(`${heading}（${rec.facility || "（未検出）"}）`);
-  if (reporter.trim()) L.push("担当: " + reporter.trim());
   if (rec.dept) L.push("事業部: " + rec.dept);
   L.push("ご担当: " + (rec.person || "ご担当者様"));
   if (rec.phone) L.push("電話: " + rec.phone);
@@ -127,7 +125,6 @@ export default function ReportScreen() {
   const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
   const [deptOverride, setDeptOverride] = useState<string | null>(null);
   const [sig, setSig] = useState({ intro: "", block: "" });
-  const [reporter, setReporter] = useState("");
   const [personalOpen, setPersonalOpen] = useState(false);
   const [copied, setCopied] = useState("");
   const [toast, setToast] = useState("");
@@ -144,18 +141,14 @@ export default function ReportScreen() {
       if (raw) {
         const o = JSON.parse(raw);
         if (o.sig) setSig(o.sig);
-        if (typeof o.reporter === "string") setReporter(o.reporter);
       }
-      const rp = localStorage.getItem("alphadrive_reporter_name");
-      if (rp && !reporter) setReporter(rp);
     } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
     try {
-      localStorage.setItem(FORM_KEY, JSON.stringify({ sig, reporter }));
+      localStorage.setItem(FORM_KEY, JSON.stringify({ sig }));
     } catch {}
-  }, [sig, reporter]);
+  }, [sig]);
 
   function doParse() {
     const recs = parseInput(text, outcome);
@@ -196,8 +189,8 @@ export default function ReportScreen() {
   }, [rec, mailType, status, form, sig]);
 
   const slack = useMemo(
-    () => (rec ? buildSlack(rec, outcome, status, project, reporter, { meetingAt, docs: selectedDocs.join("、"), nextContact }) : ""),
-    [rec, outcome, status, project, reporter, meetingAt, selectedDocs, nextContact],
+    () => (rec ? buildSlack(rec, outcome, status, project, { meetingAt, docs: selectedDocs.join("、"), nextContact }) : ""),
+    [rec, outcome, status, project, meetingAt, selectedDocs, nextContact],
   );
 
   // 解析前のプレースホルダ（テンプレ構造を{タグ}付きで見せる）
@@ -504,8 +497,6 @@ export default function ReportScreen() {
             </button>
             {personalOpen && (
               <div style={{ marginTop: 14 }}>
-                <div style={label}>報告者名（Slack報告用）</div>
-                <input value={reporter} onChange={(e) => setReporter(e.target.value)} style={{ ...input, marginBottom: 14 }} />
                 <div style={label}>名乗り（メール冒頭）</div>
                 <input value={sig.intro} onChange={(e) => setSig({ ...sig, intro: e.target.value })} placeholder="株式会社○○の△△と申します。" style={{ ...input, marginBottom: 14 }} />
                 <div style={label}>署名</div>
@@ -532,7 +523,7 @@ export default function ReportScreen() {
               </button>
             </div>
             <pre style={{ margin: 0, padding: 16, fontSize: 13, lineHeight: 1.7, whiteSpace: "pre-wrap", fontFamily: T.mono, color: rec ? T.body : T.faint }}>
-              {rec ? slack : "{mentions}\n【アポ獲得報告】（{会社名}）\n担当: {報告者}\nご担当: {担当者} 様\n状況: {自動判定}\n…解析するとここに整形済みの報告文が出ます"}
+              {rec ? slack : "{mentions}\n【アポ獲得報告】（{会社名}）\nご担当: {担当者} 様\n状況: {自動判定}\n…解析するとここに整形済みの報告文が出ます"}
             </pre>
           </div>
 
