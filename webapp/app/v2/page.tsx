@@ -44,7 +44,18 @@ export default async function V2Page() {
         </form>
       </header>
       <div style={{ flex: 1, overflow: "auto" }}>
-        <ReportClient />
+        {role === "staff" ? (
+          <ReportClient />
+        ) : (
+          <div style={{ maxWidth: 520, margin: "60px auto", padding: "32px", textAlign: "center", color: "#6b7280" }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🚧</div>
+            <h2 style={{ margin: "0 0 10px", fontSize: 18, color: "#1b2236" }}>新版は準備中です（正社員のみ先行確認）</h2>
+            <p style={{ fontSize: 14, lineHeight: 1.8 }}>
+              新しい報告画面は現在テスト中で、正社員のみ閲覧できます。<br />
+              ふだんの業務はこれまでのツールをそのままご利用ください。
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
