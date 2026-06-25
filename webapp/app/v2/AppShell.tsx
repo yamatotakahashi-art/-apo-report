@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { T } from "./ui";
 import ReportScreen from "./ReportScreen";
+import ProjectsScreen from "./ProjectsScreen";
 
 type Screen = "report" | "projects" | "history" | "settings";
 const NAV: { key: Screen; icon: string; label: string }[] = [
@@ -148,14 +149,16 @@ export default function AppShell({
       <main style={{ flex: 1, minWidth: 0 }}>
         {screen === "report" ? (
           <ReportScreen />
+        ) : screen === "projects" ? (
+          <ProjectsScreen role={role} />
         ) : (
           <div style={{ padding: "60px 40px", maxWidth: 640, margin: "0 auto", textAlign: "center", color: T.muted }}>
             <div style={{ fontSize: 36, marginBottom: 12 }}>{NAV.find((n) => n.key === screen)?.icon}</div>
             <h2 style={{ margin: "0 0 10px", fontSize: 18, color: T.ink }}>{NAV.find((n) => n.key === screen)?.label}画面</h2>
             <p style={{ fontSize: 14, lineHeight: 1.8 }}>
-              この画面は Phase 2 / 3 で実装予定です。
+              この画面は Phase 3 で実装予定です。
               <br />
-              今回（Phase 1）は「報告」画面が対象です。
+              （履歴・設定）
             </p>
           </div>
         )}
